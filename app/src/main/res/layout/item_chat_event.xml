@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  An autonomous event — the background triage loop narrating a decision it reached on
+  its own, or the confirm gate reporting an action that ran.
+
+  This is the layout that earns the rail. These entries are not conversation: nobody
+  asked for them, and rendering them as another chat bubble (which is what the previous
+  layout did) threw away the most interesting fact about the system — that a machine
+  process is running continuously underneath, whether or not a human is present.
+
+  So they attach to the rail with a node, set in mono, unbubbled. The reader sees the
+  difference between "invited" and "autonomous" before reading a single word.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/sp_2"
+    android:paddingBottom="@dimen/sp_2">
+
+    <!-- Rail column, with the node marking where this event attaches. The node's top
+         margin lines it up with the centre of the first line of text rather than the
+         top of the block, which is what makes the attachment look intentional. -->
+    <FrameLayout
+        android:layout_width="@dimen/rail_gutter"
+        android:layout_height="match_parent">
+
+        <View
+            android:layout_width="@dimen/rail_node"
+            android:layout_height="@dimen/rail_node"
+            android:layout_gravity="left|top"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_rail_node" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingEnd="@dimen/sp_3">
+
+        <!-- Head: time, app, sender. The line you scan. -->
+        <TextView
+            android:id="@+id/eventHead"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/Text.Mono.Strong"
+            tools:text="09:14  WhatsApp · Priya Sharma" />
+
+        <!-- Body: the decision and its reasoning. Muted so the head stays scannable
+             down a long timeline. -->
+        <TextView
+            android:id="@+id/eventBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/Text.Mono"
+            android:textIsSelectable="true"
+            android:visibility="gone"
+            tools:text="dismiss · low · 0.94&#10;Promotional message, no action required."
+            tools:visibility="visible" />
+    </LinearLayout>
+
+</LinearLayout>

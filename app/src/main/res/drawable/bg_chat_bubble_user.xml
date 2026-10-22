@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- User bubble. Solid indigo — the only large area of saturated colour in the
+     interface, which is what makes the human's turns findable when scanning a
+     long timeline. Mirrors the assistant's squared corner. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?attr/colorPrimary" />
+    <corners
+        android:topLeftRadius="@dimen/radius_bubble"
+        android:topRightRadius="@dimen/radius_bubble"
+        android:bottomRightRadius="@dimen/radius_sm"
+        android:bottomLeftRadius="@dimen/radius_bubble" />
+</shape>

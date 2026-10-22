@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One recorded action.
+
+  The status stripe stays: scanning for failures is the reason this screen exists, and
+  a coloured edge is readable down the list without reading any of it. What changed is
+  that the stripe now draws from theme roles (primary for success, error for failure)
+  rather than hard-coded colours, and the machine-shaped fields — the notification key,
+  the argv, the timestamp — are set in mono like everywhere else in the app.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/gutter"
+        android:paddingTop="@dimen/sp_3"
+        android:paddingBottom="@dimen/sp_3">
+
+        <View
+            android:id="@+id/statusBar"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:minHeight="30dp"
+            android:layout_marginEnd="@dimen/sp_3" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- What was done. Can be a button title or a whole argv, so it is bounded
+                 rather than allowed to push the rest of the row off screen. -->
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/Text.Body"
+                android:textFontWeight="600"
+                android:maxLines="3"
+                android:ellipsize="end"
+                tools:text="Reply to WhatsApp — “Priya Sharma”" />
+
+            <!-- Middle-ellipsized because a notification key is long and its useful
+                 half (the package) is at the front. -->
+            <TextView
+                android:id="@+id/meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textAppearance="@style/Text.Mono.Faint"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                tools:text="09:14 · com.whatsapp|0|null" />
+
+            <TextView
+                android:id="@+id/result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_1"
+                android:textAppearance="@style/Text.Body.Muted"
+                android:maxLines="6"
+                android:ellipsize="end"
+                tools:text="Reply sent." />
+
+            <!-- Already redacted on the way in; this is showing exactly what an export
+                 would contain. -->
+            <TextView
+                android:id="@+id/supplied"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textAppearance="@style/Text.Mono"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:visibility="gone"
+                tools:text="“On my way — leaving now.”"
+                tools:visibility="visible" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/hairline"
+        android:layout_marginStart="@dimen/gutter"
+        android:background="?attr/colorOutlineVariant" />
+
+</LinearLayout>

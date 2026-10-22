@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Setup strip: shown only while a permission is missing, gone forever once granted.
+     Washed indigo rather than a warning colour — an unfinished setup is a normal state,
+     not an error. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?attr/colorPrimaryContainer" />
+    <stroke android:width="1dp" android:color="@color/mc_primary_edge" />
+    <corners android:radius="@dimen/radius_md" />
+</shape>

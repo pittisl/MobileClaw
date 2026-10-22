@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The trace rail: a continuous vertical hairline the autonomous events hang off.
+     It is the signature element — it says, without a caption, that a machine process
+     runs underneath the conversation whether or not anyone is talking to it. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?attr/colorOutlineVariant" />
+</shape>

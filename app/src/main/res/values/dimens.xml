@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared 4dp spacing scale for consistent layout spacing. -->
+<resources>
+
+    <!-- ===== Spacing ===== -->
+    <dimen name="sp_1">4dp</dimen>
+    <dimen name="sp_2">8dp</dimen>
+    <dimen name="sp_3">12dp</dimen>
+    <dimen name="sp_4">16dp</dimen>
+    <dimen name="sp_5">20dp</dimen>
+    <dimen name="sp_6">24dp</dimen>
+    <dimen name="sp_8">32dp</dimen>
+    <dimen name="sp_10">40dp</dimen>
+
+    <!-- Consistent 16dp inset from each screen edge. -->
+    <dimen name="gutter">16dp</dimen>
+
+    <!-- ===== Shape ===== -->
+    <dimen name="radius_sm">8dp</dimen>
+    <dimen name="radius_md">12dp</dimen>
+    <dimen name="radius_lg">16dp</dimen>
+    <dimen name="radius_bubble">18dp</dimen>
+    <dimen name="radius_pill">999dp</dimen>
+
+    <!-- ===== Structure ===== -->
+    <dimen name="hairline">1dp</dimen>
+    <!-- The trace rail. 2dp rather than 1dp so it survives being scaled into a
+         single paper column; a 1dp rule disappears at that reproduction size. -->
+    <dimen name="rail_width">2dp</dimen>
+    <dimen name="rail_inset">10dp</dimen>
+    <dimen name="rail_node">9dp</dimen>
+    <dimen name="rail_gutter">28dp</dimen>
+
+    <!-- ===== Components ===== -->
+    <dimen name="appbar_height">56dp</dimen>
+    <dimen name="status_dot">8dp</dimen>
+    <dimen name="touch_min">48dp</dimen>
+    <dimen name="bubble_max_width">300dp</dimen>
+    <dimen name="icon_sm">18dp</dimen>
+    <dimen name="icon_md">22dp</dimen>
+
+</resources>

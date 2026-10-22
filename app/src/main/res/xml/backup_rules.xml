@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Auto Backup rules for API 30 and below. Devices on API 31+ use
+   data_extraction_rules.xml instead, so both files must stay in sync.
+
+   Same reasoning as there: the app database never leaves the device via backup.
+   See Settings → Export data for the user-initiated path.
+-->
+<full-backup-content>
+    <exclude domain="database" path="mobileclaw.db" />
+    <exclude domain="database" path="mobileclaw.db-wal" />
+    <exclude domain="database" path="mobileclaw.db-shm" />
+    <exclude domain="file" path="photo-mms/" />
+</full-backup-content>

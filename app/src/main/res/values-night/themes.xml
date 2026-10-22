@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark-scheme overrides.
+
+  Only the values that must differ are restated here; everything structural (type,
+  shape, component styles) is inherited from values/themes.xml, so the two schemes
+  cannot drift apart in anything but colour.
+
+  values-night/colors.xml already redefines every mc_* token, so most roles resolve
+  correctly with no override at all. What has to be repeated is the system-chrome
+  light/dark flags, which are booleans rather than colours and therefore do not follow
+  from the palette.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.MobileClaw" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorPrimary">@color/mc_primary</item>
+        <item name="colorOnPrimary">@color/mc_on_primary</item>
+        <item name="colorPrimaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnPrimaryContainer">@color/mc_ink</item>
+
+        <item name="colorSecondary">@color/mc_primary</item>
+        <item name="colorOnSecondary">@color/mc_on_primary</item>
+        <item name="colorSecondaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnSecondaryContainer">@color/mc_ink</item>
+        <item name="colorTertiary">@color/mc_primary</item>
+        <item name="colorOnTertiary">@color/mc_on_primary</item>
+        <item name="colorTertiaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnTertiaryContainer">@color/mc_ink</item>
+
+        <item name="android:colorBackground">@color/mc_surface</item>
+        <item name="colorSurface">@color/mc_surface</item>
+        <item name="colorOnSurface">@color/mc_ink</item>
+        <item name="colorSurfaceVariant">@color/mc_surface_sunken</item>
+        <item name="colorOnSurfaceVariant">@color/mc_ink_muted</item>
+        <item name="colorSurfaceContainerLow">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainer">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainerHigh">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainerHighest">@color/mc_surface_sunken</item>
+
+        <item name="colorOutline">@color/mc_hairline_strong</item>
+        <item name="colorOutlineVariant">@color/mc_hairline</item>
+
+        <item name="colorSurfaceInverse">@color/mc_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/mc_inverse_ink</item>
+        <item name="colorPrimaryInverse">@color/mc_inverse_primary</item>
+
+        <item name="colorError">@color/mc_error</item>
+        <item name="colorErrorContainer">@color/mc_error_wash</item>
+        <item name="colorOnError">@color/mc_on_primary</item>
+        <item name="colorOnErrorContainer">@color/mc_error</item>
+
+        <!-- The one genuinely different thing: dark chrome needs light icons. -->
+        <item name="android:statusBarColor">@color/mc_surface</item>
+        <item name="android:navigationBarColor">@color/mc_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+
+        <item name="android:fontFamily">@font/plex_sans</item>
+        <item name="fontFamily">@font/plex_sans</item>
+        <item name="textAppearanceBodyMedium">@style/Text.Body</item>
+        <item name="textAppearanceTitleMedium">@style/Text.Title</item>
+        <item name="textAppearanceLabelLarge">@style/Text.Button</item>
+        <item name="textAppearanceLabelSmall">@style/Text.Label</item>
+
+        <item name="shapeAppearanceCornerSmall">@style/Shape.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/Shape.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/Shape.Large</item>
+
+        <item name="materialButtonStyle">@style/Widget.MC.Button</item>
+        <item name="borderlessButtonStyle">@style/Widget.MC.Button.Text</item>
+        <item name="chipStyle">@style/Widget.MC.Chip</item>
+        <item name="materialAlertDialogTheme">@style/Theme.MC.Dialog</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+</resources>

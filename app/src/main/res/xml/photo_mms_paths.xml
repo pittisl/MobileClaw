@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Exact message.pdu URIs are granted only after the user approves this MMS. -->
+    <files-path name="outgoing_mms" path="photo-mms/" />
+</paths>

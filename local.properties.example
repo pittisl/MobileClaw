@@ -1,0 +1,15 @@
+# Copy to local.properties and keep that file private.
+# Android Studio can populate sdk.dir for your machine.
+# sdk.dir=/path/to/Android/Sdk
+
+# Configure normal installations through Settings > Model service.
+# Opt-in internal debug seed only; NEVER distribute an APK containing this seed.
+LLM_DEV_DEFAULTS=false
+LLM_API_KEY=
+LLM_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+LLM_MODEL=gemini-2.5-flash
+
+# Optional internal Notion integration, subject to the same developer-build guard.
+NOTION_API_KEY=
+# -Pmobileclaw.publicBuild=true overrides developer defaults for shareable debug builds.
+# Every release build ignores developer credentials regardless of this setting.

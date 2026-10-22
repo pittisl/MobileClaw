@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A conversation turn — something a person said, or the assistant's reply to it.
+
+  The left column carries the trace rail. Every item in the timeline draws its own
+  segment of it, which is what keeps the line continuous no matter how the list
+  recycles or what order the message types arrive in. Conversation turns show the rail
+  passing behind them without a node: the background process kept running while you
+  were talking, but this turn is not one of its events.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/sp_1"
+    android:paddingBottom="@dimen/sp_1">
+
+    <!-- Rail column -->
+    <FrameLayout
+        android:layout_width="@dimen/rail_gutter"
+        android:layout_height="match_parent">
+
+    </FrameLayout>
+
+    <!-- Content column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingEnd="@dimen/sp_3">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/bubble"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="@dimen/bubble_max_width"
+                android:paddingStart="@dimen/sp_3"
+                android:paddingEnd="@dimen/sp_3"
+                android:paddingTop="@dimen/sp_2"
+                android:paddingBottom="@dimen/sp_2"
+                android:textAppearance="@style/Text.Body"
+                android:background="@drawable/bg_chat_bubble_assistant"
+                android:textIsSelectable="true"
+                tools:text="Three things need you. Priya asked about the 2pm meeting." />
+
+            <!-- Shown instead of the bubble while a turn is in flight. A separate view
+                 rather than placeholder text in the bubble, so the indicator is
+                 unmistakably not something the model said. -->
+            <FrameLayout
+                android:id="@+id/thinking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:background="@drawable/bg_chat_bubble_assistant"
+                android:paddingStart="@dimen/sp_3"
+                android:paddingEnd="@dimen/sp_3"
+                android:paddingTop="@dimen/sp_3"
+                android:paddingBottom="@dimen/sp_3"
+                android:visibility="gone"
+                tools:visibility="gone">
+
+                <edu.pitt.isl.mobileclaw.notiftest.ThinkingDotsView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+        </FrameLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/photoScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none"
+            android:visibility="gone">
+            <LinearLayout
+                android:id="@+id/photoCandidates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Per-turn token cost. Deliberately always visible rather than behind a
+             long-press: the point of history budgeting is that a prompt growing quietly is what
+             nobody notices until the bill arrives. Mono, because it is machine output. -->
+        <TextView
+            android:id="@+id/usage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:paddingStart="@dimen/sp_1"
+            android:textAppearance="@style/Text.Mono.Faint"
+            android:visibility="gone"
+            tools:text="1.2k in / 340 out"
+            tools:visibility="visible" />
+
+        <HorizontalScrollView
+            android:id="@+id/actionScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sp_2"
+            android:clipToPadding="false"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/actionButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</LinearLayout>

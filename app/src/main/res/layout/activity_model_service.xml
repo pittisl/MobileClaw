@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true"
+    android:importantForAutofill="noExcludeDescendants">
+
+    <include layout="@layout/include_screen_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/hairline"
+        android:background="?attr/colorOutlineVariant" />
+
+    <!-- The whole form is excluded from view-state restoration: restoring a URL
+         draft while reloading a saved key could associate that key with a new host. -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/modelServiceForm"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:saveEnabled="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/gutter">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/model_service_intro"
+                android:textAppearance="@style/Text.Body.Muted" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_4"
+                android:labelFor="@id/modelProvider"
+                android:text="@string/model_service_provider"
+                android:textAppearance="@style/Text.Title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/modelProvider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_min"
+                android:spinnerMode="dropdown" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/modelBaseUrlLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_3"
+                android:hint="@string/model_service_base_url"
+                app:helperText="@string/model_service_base_url_help">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/modelBaseUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:singleLine="true"
+                    android:imeOptions="actionNext|flagNoPersonalizedLearning" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/modelIdLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_3"
+                android:hint="@string/model_service_model_id">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/modelId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textVisiblePassword"
+                    android:singleLine="true"
+                    android:imeOptions="actionNext|flagNoPersonalizedLearning" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_4"
+                android:labelFor="@id/modelAuth"
+                android:text="@string/model_service_auth"
+                android:textAppearance="@style/Text.Title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/modelAuth"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_min"
+                android:spinnerMode="dropdown" />
+
+            <TextView
+                android:id="@+id/modelNoAuthHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/model_service_auth_none_help"
+                android:textAppearance="@style/Text.Body.Muted"
+                android:visibility="gone" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/modelApiKeyLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_3"
+                android:hint="@string/model_service_api_key">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/modelApiKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword|textNoSuggestions"
+                    android:singleLine="true"
+                    android:saveEnabled="false"
+                    android:importantForAutofill="no"
+                    android:imeOptions="actionDone|flagNoPersonalizedLearning" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/modelShowKey"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/touch_min"
+                android:saveEnabled="false"
+                android:text="@string/model_service_show_key" />
+
+            <TextView
+                android:id="@+id/modelKeyClearedNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/model_service_key_cleared"
+                android:textAppearance="@style/Text.Body.Muted"
+                android:accessibilityLiveRegion="polite"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/modelAdvancedToggle"
+                style="@style/Widget.MC.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_2"
+                android:text="@string/model_service_advanced_show" />
+
+            <LinearLayout
+                android:id="@+id/modelAdvancedFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/modelTimeoutLayout"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_2"
+                    android:hint="@string/model_service_timeout"
+                    app:helperText="@string/model_service_timeout_help">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/modelTimeout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:imeOptions="actionNext" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/modelInputBudgetLayout"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:hint="@string/model_service_input_budget"
+                    app:helperText="@string/model_service_budget_help">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/modelInputBudget"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:imeOptions="actionDone" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/modelSupportsImages"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="@dimen/touch_min"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:text="@string/model_service_images" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/model_service_images_help"
+                    android:textAppearance="@style/Text.Body.Muted" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/modelServiceStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_4"
+                android:textAppearance="@style/Text.Body"
+                android:accessibilityLiveRegion="polite" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/modelServiceProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_2"
+                android:indeterminate="true"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_4"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/modelServiceSave"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/model_service_save" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/modelServiceTest"
+                    style="@style/Widget.MC.Button.Outlined"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="@dimen/sp_2"
+                    android:text="@string/model_service_test" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_2"
+                android:text="@string/model_service_test_help"
+                android:textAppearance="@style/Text.Body.Muted" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/modelServiceClear"
+                style="@style/Widget.MC.Button.Text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_3"
+                android:text="@string/model_service_clear"
+                android:textColor="?attr/colorError" />
+
+            <LinearLayout
+                android:id="@+id/modelServiceResults"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_4"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/model_service_results_title"
+                    android:textAppearance="@style/Text.Title" />
+
+                <TextView
+                    android:id="@+id/modelResultStreaming"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:textAppearance="@style/Text.Body" />
+
+                <TextView
+                    android:id="@+id/modelResultTools"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:textAppearance="@style/Text.Body" />
+
+                <TextView
+                    android:id="@+id/modelResultJson"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:textAppearance="@style/Text.Body" />
+
+                <TextView
+                    android:id="@+id/modelResultVision"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:textAppearance="@style/Text.Body" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sp_3"
+                    android:text="@string/model_service_results_help"
+                    android:textAppearance="@style/Text.Body.Muted" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

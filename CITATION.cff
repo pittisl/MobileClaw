@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use MobileClaw in your work, please cite the MobiCom 2026 demo paper below."
+title: MobileClaw
+type: software
+authors:
+  - family-names: Yang
+    given-names: Boyuan
+  - family-names: Du
+    given-names: Alexander
+  - family-names: Hassel
+    given-names: Ozzie
+  - family-names: Uganandan
+    given-names: Jash
+  - family-names: Gao
+    given-names: Wei
+repository-code: "https://github.com/pittisl/MobileClaw"
+url: "https://github.com/pittisl/MobileClaw"
+license: MIT
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: Yang
+      given-names: Boyuan
+    - family-names: Du
+      given-names: Alexander
+    - family-names: Hassel
+      given-names: Ozzie
+    - family-names: Uganandan
+      given-names: Jash
+    - family-names: Gao
+      given-names: Wei
+  title: "Demo: MobileClaw: A Notification-Driven, Human-Gated Mobile LLM Agent"
+  collection-title: "Proceedings of the 32nd Annual International Conference on Mobile Computing and Networking"
+  year: 2026
+  doi: "10.1145/3795866.3848463"
+  url: "https://doi.org/10.1145/3795866.3848463"

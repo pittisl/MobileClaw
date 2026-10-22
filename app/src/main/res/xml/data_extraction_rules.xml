@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Backup / transfer rules for API 31+.
+
+   The app database is excluded from BOTH cloud backup and device transfer. It holds
+   the action audit trail, chat history, triage decisions and user memories.
+   The manifest sets android:allowBackup="true", so without these rules
+   it would be uploaded off the device by default. The user gets their own copy via
+   Settings → Export data instead: a deliberate choice they make, to a destination
+   they pick.
+
+   The -wal and -shm sidecars are separate files and need their own exclusions;
+   excluding only the .db would still ship recent writes off-device via the WAL.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="mobileclaw.db" />
+        <exclude domain="database" path="mobileclaw.db-wal" />
+        <exclude domain="database" path="mobileclaw.db-shm" />
+        <exclude domain="file" path="photo-mms/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="mobileclaw.db" />
+        <exclude domain="database" path="mobileclaw.db-wal" />
+        <exclude domain="database" path="mobileclaw.db-shm" />
+        <exclude domain="file" path="photo-mms/" />
+    </device-transfer>
+</data-extraction-rules>

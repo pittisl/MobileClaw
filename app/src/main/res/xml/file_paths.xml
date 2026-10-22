@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileOpener: read grants for files the user taps in the chat. Shared storage only;
+     nothing under our private directories is ever offered. -->
+<paths>
+    <external-path name="external" path="." />
+</paths>
