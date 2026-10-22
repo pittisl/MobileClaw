@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/model_service_category">
+        <Preference
+            app:key="model_service"
+            app:title="@string/model_service_title"
+            app:summary="@string/model_service_setup"
+            app:persistent="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Automation">
+
+        <SwitchPreferenceCompat
+            app:key="full_automation_mode"
+            app:title="Full Automation Mode"
+            app:summaryOn="ON — actions run automatically with NO confirmation. The agent can dismiss notifications, send replies, and press buttons unattended."
+            app:summaryOff="OFF — every action asks you to confirm before it runs (recommended)."
+            app:defaultValue="false" />
+
+        <!-- The follow-up turn. Sits under Automation because it is the other
+             thing that decides how much the agent does on its own — but it only reads,
+             so its worst case is cost, and the default is the opposite of the row above. -->
+        <SwitchPreferenceCompat
+            app:key="notification_follow_up"
+            app:title="Context follow-up"
+            app:summaryOn="ON — after triaging a message, call or appointment, the agent checks your calendar, recent activity and memories and suggests what to do. It only reads; every action still asks."
+            app:summaryOff="OFF — triage decides from the notification text alone."
+            app:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <!-- Memory is its own category, not a row in "Data", because the destructive action
+         below it must not read as part of "Clear agent history". That action means
+         "delete the record of what you did"; this is the opposite — the only data in the
+         app the user explicitly asked to keep. -->
+    <PreferenceCategory app:title="Appearance">
+
+        <ListPreference
+            app:key="theme_mode"
+            app:title="Theme"
+            app:entries="@array/theme_entries"
+            app:entryValues="@array/theme_values"
+            app:defaultValue="system"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <!-- Optional execution tracing for demonstrations. Live output is off by default
+         because a full prompt per turn can fill logcat's ring buffer. Everything printed
+         is redacted at the trace boundary. -->
+    <PreferenceCategory app:title="Demonstration">
+
+        <ListPreference
+            app:key="calendar_read_source"
+            app:title="Calendar"
+            app:defaultValue="all"
+            app:summary="Choose one calendar for reading and adding events, or All calendars for reading only. Additions require confirmation." />
+
+        <SwitchPreferenceCompat
+            app:key="reasoning_trace"
+            app:title="Print reasoning to system log"
+            app:summaryOn="ON — every decision, prompt and tool call is printed to logcat under MobileClaw-TRACE. Sensitive text is redacted."
+            app:summaryOff="OFF — the agent still records its decisions; they are just not printed to the log."
+            app:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Memory">
+
+        <Preference
+            app:key="memory_review"
+            app:title="What the agent remembers"
+            app:summary="Everything the agent has learned about you, how it learned each thing, and a way to delete any of it."
+            app:persistent="false" />
+
+        <Preference
+            app:key="clear_memory"
+            app:title="Forget everything"
+            app:summary="Permanently delete every stored memory. Separate from clearing agent history, and not included in it."
+            app:persistent="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Data">
+
+        <Preference
+            app:key="action_history"
+            app:title="Action history"
+            app:summary="Everything the agent has done — buttons pressed, replies sent, commands run, and confirmations that were rejected, dropped or expired."
+            app:persistent="false" />
+
+        <Preference
+            app:key="export_data"
+            app:title="Export data"
+            app:summary="Save a copy of your chat history and the action audit trail to a file you choose. The database is excluded from cloud backup, so this is the only way to keep your own copy."
+            app:persistent="false" />
+
+        <Preference
+            app:key="clear_action_log"
+            app:title="Clear agent history"
+            app:summary="Permanently delete the record of what the agent has done and decided."
+            app:persistent="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

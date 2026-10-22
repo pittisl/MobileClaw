@@ -1,0 +1,7 @@
+# Keep generated fixtures and visual assets byte-for-byte across platforms.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.jar binary

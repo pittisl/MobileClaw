@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rise and settle. Scale starts at 0.96 rather than something smaller: a card that
+     grows from nothing reads as playful, and this is the moment the agent asks
+     permission to act on the user's behalf. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/fast_out_slow_in">
+    <alpha android:fromAlpha="0" android:toAlpha="1" android:duration="180" />
+    <scale
+        android:fromXScale="0.96" android:toXScale="1"
+        android:fromYScale="0.96" android:toYScale="1"
+        android:pivotX="50%" android:pivotY="50%"
+        android:duration="220" />
+    <translate android:fromYDelta="2%" android:toYDelta="0" android:duration="220" />
+</set>

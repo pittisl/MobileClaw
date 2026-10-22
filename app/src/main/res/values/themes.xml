@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Nocturne theme.
+
+  Everything maps onto Material 3's colour roles rather than being set per-view, so
+  Material components (chips, dialogs, text fields, buttons) inherit the scheme without
+  each layout restating it. The previous theme left every role commented out, which is
+  why the app rendered in Material's default purple: it was never styled, it was
+  unstyled, and Material's baseline showed through.
+
+  Rule for anyone extending this: no colour literals in layouts. If a view needs a
+  colour that is not reachable through a theme attribute here, the scheme is missing a
+  role — add it here rather than hard-coding it at the call site. The old layouts had
+  #000000 text on chat bubbles, which is exactly how dark mode gets broken silently.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.MobileClaw" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- ===== Indigo: the agent ===== -->
+        <item name="colorPrimary">@color/mc_primary</item>
+        <item name="colorOnPrimary">@color/mc_on_primary</item>
+        <item name="colorPrimaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnPrimaryContainer">@color/mc_primary</item>
+
+        <!-- Secondary and tertiary deliberately resolve to the same indigo. The palette
+             is monochromatic by design; letting Material fill these with its own
+             defaults is how a stray purple or teal appears in a component nobody
+             restyled. -->
+        <item name="colorSecondary">@color/mc_primary</item>
+        <item name="colorOnSecondary">@color/mc_on_primary</item>
+        <item name="colorSecondaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnSecondaryContainer">@color/mc_primary</item>
+        <item name="colorTertiary">@color/mc_primary</item>
+        <item name="colorOnTertiary">@color/mc_on_primary</item>
+        <item name="colorTertiaryContainer">@color/mc_primary_wash</item>
+        <item name="colorOnTertiaryContainer">@color/mc_primary</item>
+
+        <!-- ===== Ground ===== -->
+        <item name="android:colorBackground">@color/mc_surface</item>
+        <item name="colorSurface">@color/mc_surface</item>
+        <item name="colorOnSurface">@color/mc_ink</item>
+        <item name="colorSurfaceVariant">@color/mc_surface_sunken</item>
+        <item name="colorOnSurfaceVariant">@color/mc_ink_muted</item>
+        <item name="colorSurfaceContainerLow">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainer">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainerHigh">@color/mc_surface_raised</item>
+        <item name="colorSurfaceContainerHighest">@color/mc_surface_sunken</item>
+
+        <!-- ===== Structure ===== -->
+        <item name="colorOutline">@color/mc_hairline_strong</item>
+        <item name="colorOutlineVariant">@color/mc_hairline</item>
+
+        <!-- ===== Inversion: the confirm gate ===== -->
+        <item name="colorSurfaceInverse">@color/mc_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/mc_inverse_ink</item>
+        <item name="colorPrimaryInverse">@color/mc_inverse_primary</item>
+
+        <!-- ===== State ===== -->
+        <item name="colorError">@color/mc_error</item>
+        <item name="colorErrorContainer">@color/mc_error_wash</item>
+        <item name="colorOnError">@color/mc_on_primary</item>
+        <item name="colorOnErrorContainer">@color/mc_error</item>
+
+        <!-- ===== System chrome =====
+             Edge-to-edge with a matching status bar: a phone screenshot with a
+             mismatched status bar strip across the top looks like a mistake in a
+             paper figure. -->
+        <item name="android:statusBarColor">@color/mc_surface</item>
+        <item name="android:navigationBarColor">@color/mc_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+
+        <!-- ===== Type ===== -->
+        <item name="android:fontFamily">@font/plex_sans</item>
+        <item name="fontFamily">@font/plex_sans</item>
+        <item name="textAppearanceBodyMedium">@style/Text.Body</item>
+        <item name="textAppearanceTitleMedium">@style/Text.Title</item>
+        <item name="textAppearanceLabelLarge">@style/Text.Button</item>
+        <item name="textAppearanceLabelSmall">@style/Text.Label</item>
+
+        <!-- ===== Shape ===== -->
+        <item name="shapeAppearanceCornerSmall">@style/Shape.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/Shape.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/Shape.Large</item>
+
+        <!-- ===== Component defaults ===== -->
+        <item name="materialButtonStyle">@style/Widget.MC.Button</item>
+        <item name="borderlessButtonStyle">@style/Widget.MC.Button.Text</item>
+        <item name="chipStyle">@style/Widget.MC.Chip</item>
+        <item name="materialAlertDialogTheme">@style/Theme.MC.Dialog</item>
+        <!-- PreferenceFragmentCompat builds its own dialogs (the ListPreference picker)
+             through appcompat's AlertDialog.Builder, which reads alertDialogTheme and
+             ignores materialAlertDialogTheme entirely. Without this the theme picker
+             renders as a bare platform dialog — square corners, system font — in the
+             middle of an otherwise styled app. -->
+        <item name="alertDialogTheme">@style/Theme.MC.PrefDialog</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+    <style name="Theme.MobileClaw" parent="Base.Theme.MobileClaw" />
+
+    <!-- ===================== Shape ===================== -->
+    <style name="Shape.Small" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerSize">@dimen/radius_sm</item>
+    </style>
+    <style name="Shape.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">@dimen/radius_md</item>
+    </style>
+    <style name="Shape.Large" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">@dimen/radius_lg</item>
+    </style>
+
+    <!-- ===================== Buttons =====================
+         Material's default filled button is a full pill with generous height. Squaring
+         it off to a 12dp radius reads as a control rather than a call-to-action, which
+         suits an interface you supervise rather than one selling you something. -->
+    <style name="Widget.MC.Button" parent="Widget.Material3.Button">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="shapeAppearance">@style/Shape.Medium</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+        <item name="android:paddingStart">@dimen/sp_4</item>
+        <item name="android:paddingEnd">@dimen/sp_4</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.MC.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="shapeAppearance">@style/Shape.Medium</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Widget.MC.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="shapeAppearance">@style/Shape.Medium</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="Widget.MC.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="shapeAppearance">@style/Shape.Medium</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+    </style>
+
+    <!-- Compact text button for dense rows (the app bar, the setup strip). Drops the
+         48dp floor because these sit inside rows that already provide the touch area. -->
+    <style name="Widget.MC.Button.Text.Compact">
+        <item name="android:minHeight">36dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">@dimen/sp_3</item>
+        <item name="android:paddingEnd">@dimen/sp_3</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- ===================== Chips ===================== -->
+    <style name="Widget.MC.Chip" parent="Widget.Material3.Chip.Assist">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="chipBackgroundColor">?attr/colorSurface</item>
+        <item name="chipStrokeColor">?attr/colorOutlineVariant</item>
+        <item name="chipStrokeWidth">@dimen/hairline</item>
+        <item name="chipMinHeight">34dp</item>
+        <item name="chipCornerRadius">@dimen/radius_sm</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+
+    <!-- ===================== Dialog =====================
+         The confirm gate. It is the most consequential moment in the interface — the
+         point where an autonomous system asks a human for permission — so it inverts:
+         a near-black card on the ivory ground. That is where the design spends its
+         contrast, which is why no warning colour is needed anywhere. -->
+    <style name="Theme.MC.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <!-- Every surface role, not just colorSurface. Material 3 draws a dialog from
+             colorSurfaceContainerHigh, so overriding colorSurface alone inverted the
+             *text* and left the card at the app's normal surface — dark on dark, which
+             is unreadable and is exactly what shipped until a device showed it. If a
+             future Material version moves the dialog to another container role, it is
+             still covered here. -->
+        <item name="colorSurface">@color/mc_inverse_surface</item>
+        <item name="colorSurfaceContainer">@color/mc_inverse_surface</item>
+        <item name="colorSurfaceContainerLow">@color/mc_inverse_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/mc_inverse_surface</item>
+        <item name="colorSurfaceContainerHighest">@color/mc_inverse_surface</item>
+        <item name="android:colorBackground">@color/mc_inverse_surface</item>
+        <item name="colorOnSurface">@color/mc_inverse_ink</item>
+        <item name="colorOnSurfaceVariant">@color/mc_inverse_ink_muted</item>
+        <item name="colorPrimary">@color/mc_inverse_primary</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowAnimationStyle">@style/Animation.MC.Dialog</item>
+        <item name="shapeAppearanceOverlay">@style/Shape.DialogOverlay</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Text.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/Text.Dialog.Body</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.MC.Dialog.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.MC.Dialog.Button.Negative</item>
+    </style>
+
+    <!-- The gate arrives rather than appearing. It interrupts whatever the user was
+         doing, and an instant cut reads as a glitch at exactly the moment the interface
+         most needs to look deliberate. -->
+    <style name="Animation.MC.Dialog" parent="Animation.AppCompat.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
+
+    <!-- The preference picker. Not inverted like the confirm gate: this is an ordinary
+         choice, not a moment demanding attention, so it stays on the app's own surface
+         and only borrows the type, shape and accent. -->
+    <style name="Theme.MC.PrefDialog" parent="ThemeOverlay.Material3.Dialog.Alert">
+        <item name="colorPrimary">@color/mc_primary</item>
+        <item name="colorSurface">@color/mc_surface_raised</item>
+        <item name="colorOnSurface">@color/mc_ink</item>
+        <item name="colorOnSurfaceVariant">@color/mc_ink_muted</item>
+        <item name="android:fontFamily">@font/plex_sans</item>
+        <item name="fontFamily">@font/plex_sans</item>
+        <item name="shapeAppearanceOverlay">@style/Shape.DialogOverlay</item>
+        <!-- appcompat's AlertDialog draws its own window background and ignores
+             shapeAppearanceOverlay, so the corners stay square without this. API 28+,
+             which every device this runs on satisfies (minSdk 26 only matters for the
+             attribute being unknown, and an unknown attribute is skipped). -->
+        <item name="android:dialogCornerRadius" tools:targetApi="p">@dimen/radius_lg</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.MC.Button.Text</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.MC.Button.Text</item>
+    </style>
+
+    <style name="Shape.DialogOverlay" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_lg</item>
+    </style>
+
+    <style name="Text.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:fontFamily">@font/plex_sans</item>
+        <item name="fontFamily">@font/plex_sans</item>
+        <item name="android:textFontWeight">600</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/mc_inverse_ink</item>
+    </style>
+
+    <style name="Text.Dialog.Body" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:fontFamily">@font/plex_sans</item>
+        <item name="fontFamily">@font/plex_sans</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+        <item name="android:textColor">@color/mc_inverse_ink</item>
+    </style>
+
+    <!-- Approve is filled; reject is quiet text. The asymmetry is deliberate: taking an
+         action should require finding the emphatic control, declining should not. -->
+    <style name="Widget.MC.Dialog.Button.Positive" parent="Widget.Material3.Button">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="shapeAppearance">@style/Shape.Small</item>
+        <item name="backgroundTint">@color/mc_inverse_ink</item>
+        <item name="android:textColor">@color/mc_inverse_surface</item>
+        <item name="android:minHeight">42dp</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.MC.Dialog.Button.Negative" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAppearance">@style/Text.Button</item>
+        <item name="android:textColor">@color/mc_inverse_ink_muted</item>
+        <item name="android:minHeight">42dp</item>
+    </style>
+
+</resources>

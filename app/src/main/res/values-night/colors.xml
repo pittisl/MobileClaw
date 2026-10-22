@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nocturne — the dark scheme.
+
+  Designed, not inverted. Three things change beyond flipping value:
+
+  - Indigo lightens to #8E97E8. The light scheme's #232A5C is nearly invisible on a
+    dark ground; a dark-mode accent has to be a different colour to be the same idea.
+  - The ground stays blue-cast (#14161D) rather than neutral grey, so the single hue
+    reads as belonging to the surface rather than sitting on top of it.
+  - Inversion flips with it: the confirm gate becomes a LIGHT card on the dark ground.
+    The gate's prominence comes from being opposite the interface, whichever way the
+    interface currently points.
+
+  This is the scheme for the conference monitor in Austin. The light scheme is for
+  paper figures, which reproduce better on white.
+-->
+<resources>
+
+    <!-- ===== Ground ===== -->
+    <color name="mc_surface">#FF14161D</color>
+    <color name="mc_surface_raised">#FF1C1F28</color>
+    <color name="mc_surface_sunken">#FF101219</color>
+
+    <!-- ===== Ink ===== -->
+    <color name="mc_ink">#FFF2F3F7</color>
+    <color name="mc_ink_muted">#FF9AA0AE</color>
+    <color name="mc_ink_faint">#FF6E7482</color>
+
+    <!-- ===== Structure ===== -->
+    <color name="mc_hairline">#FF262A35</color>
+    <color name="mc_hairline_strong">#FF343947</color>
+
+    <!-- ===== Indigo: the agent ===== -->
+    <color name="mc_primary">#FF8E97E8</color>
+    <color name="mc_primary_pressed">#FFA3AAEF</color>
+    <color name="mc_on_primary">#FF14161D</color>
+    <color name="mc_primary_wash">#FF232842</color>
+    <color name="mc_primary_edge">#FF39406B</color>
+
+    <!-- ===== Inversion: the confirm gate (light card on dark UI) ===== -->
+    <color name="mc_inverse_surface">#FFF2F3F7</color>
+    <color name="mc_inverse_ink">#FF14161D</color>
+    <color name="mc_inverse_ink_muted">#FF5C6270</color>
+    <color name="mc_inverse_primary">#FF2E376F</color>
+
+    <!-- ===== State ===== -->
+    <color name="mc_paused">#FF6E7482</color>
+    <color name="mc_error">#FFE08A92</color>
+    <color name="mc_error_wash">#FF2A1A1D</color>
+
+    <color name="mc_scrim">#B3000000</color>
+
+</resources>

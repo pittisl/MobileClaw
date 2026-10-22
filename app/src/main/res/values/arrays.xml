@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Order matters: "Match system" first, because it is the default and the one most
+         users should leave alone. The explicit options exist for the demo — light for
+         paper figures, dark for the conference monitor. -->
+    <string-array name="theme_entries">
+        <item>Match system</item>
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+    <string-array name="theme_values">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+</resources>

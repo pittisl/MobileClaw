@@ -1,0 +1,30 @@
+10-01 15:10:00.100  4242  4300 I MobileClaw-TRACE: ════ CHAT TURN #3 ─ 15:10:00 ─ Notification follow-up ═════════════════════════════
+10-01 15:10:00.101  4242  4300 I MobileClaw-TRACE: ▸ SYSTEM PROMPT  (120 chars, 7 tools offered)
+10-01 15:10:00.101  4242  4300 I MobileClaw-TRACE:     You are a phone assistant. This line is long enough that the app wrapped it at the
+10-01 15:10:00.101  4242  4300 I MobileClaw-TRACE:     ↳  per-entry limit, and the viewer must glue it back.
+10-01 15:10:00.102  4242  4300 I MobileClaw-TRACE: ▸ HISTORY  1 turn(s) kept, 0 dropped
+10-01 15:10:00.102  4242  4300 I MobileClaw-TRACE:     USER       what time is my flight?
+10-01 15:10:00.500  4242  4310 I MobileClaw-TRACE: ════ CHAT TURN #4 ─ 15:10:00 ─ General chat ══════════════════════════════════════
+10-01 15:10:00.501  4242  4310 I MobileClaw-TRACE: ▸ SYSTEM PROMPT  (80 chars, 23 tools offered)
+10-01 15:10:00.501  4242  4310 I MobileClaw-TRACE:     You are MobileClaw.
+10-01 15:10:01.000  4242  4300 I MobileClaw-TRACE: ▸ TOOL CALL  #3  read_calendar  {"range_start":"2026-10-03T00:00:00"}
+10-01 15:10:01.050  4242  4255 I MobileClaw-TRACE: ════ TRIAGE ─ 15:10:01 ─ Messages ══════════════════════════════════════════════
+10-01 15:10:01.100  4242  4310 I MobileClaw-TRACE: ▸ TOOL CALL  #4  search_files  {"query":"UA1234"}
+10-01 15:10:01.120  4242  4255 I MobileClaw-TRACE: ▸ NOTIFICATION  (412) [REDACTED]
+10-01 15:10:01.120  4242  4255 I MobileClaw-TRACE:     still on for dinner?
+10-01 15:10:01.150  4242  4300 I MobileClaw-TRACE: ▸ TOOL RESULT  #3  read_calendar
+10-01 15:10:01.151  4242  4300 I MobileClaw-TRACE:     Events:
+10-01 15:10:01.151  4242  4300 I MobileClaw-TRACE:     Sat 3 Oct, 07:15 — Flight to Austin
+10-01 15:10:01.160  4242  4255 I MobileClaw-TRACE: ▸ DECISION  reply · high · confidence 0.91
+10-01 15:10:01.160  4242  4255 I MobileClaw-TRACE:     A friend asks about dinner.
+10-01 15:10:01.161  4242  4255 I MobileClaw-TRACE: ══════════════════════════════════════════════════════════════════════════════
+10-01 15:10:01.300  4242  4310 I MobileClaw-TRACE: ▸ TOOL RESULT  #4  search_files
+10-01 15:10:01.301  4242  4310 I MobileClaw-TRACE:     1 file(s) match "UA1234" (best first):
+10-01 15:10:01.301  4242  4310 I MobileClaw-TRACE:        text read from it by OCR (may contain misreadings): Flight UA1234 Departs 07:15
+10-01 15:10:02.000  4242  4300 I MobileClaw-TRACE: ▸ ANSWER  #3  (finish=stop  ·  1700 in / 60 out)
+10-01 15:10:02.001  4242  4300 I MobileClaw-TRACE:     Your flight leaves at **7:15 AM**.
+10-01 15:10:02.001  4242  4300 I MobileClaw-TRACE:     @@ACTIONS@@ Reply 7:15 AM | Ask about a ride
+10-01 15:10:02.002  4242  4300 I MobileClaw-TRACE: ══════════════════════════════════════════════════════════════════════════════
+10-01 15:10:02.900  4242  4310 I MobileClaw-TRACE: ▸ ANSWER  #4  (finish=stop  ·  900 in / 30 out)
+10-01 15:10:02.901  4242  4310 I MobileClaw-TRACE:     Found your boarding pass.
+10-01 15:10:02.902  4242  4310 I MobileClaw-TRACE: ══════════════════════════════════════════════════════════════════════════════

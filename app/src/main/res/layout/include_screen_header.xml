@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Header for a secondary screen: a back arrow and a title.
+
+  These screens run under a NoActionBar theme, so nothing supplied an up affordance and
+  the only way back was the system gesture. That is fine when you know it and a dead end
+  when you do not — and at a demo booth, a visitor handed the phone has no reason to know
+  it. One include rather than three copies, so the three screens cannot drift.
+
+  The title is set in code (`headerTitle`) so each Activity keeps naming itself.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/appbar_height"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="@dimen/sp_1"
+    android:paddingEnd="@dimen/gutter">
+
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="@dimen/touch_min"
+        android:layout_height="@dimen/touch_min"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_arrow_back"
+        android:scaleType="center"
+        android:contentDescription="@string/cd_back" />
+
+    <TextView
+        android:id="@+id/headerTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/sp_1"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textAppearance="@style/Text.Wordmark"
+        tools:text="Settings" />
+
+</LinearLayout>

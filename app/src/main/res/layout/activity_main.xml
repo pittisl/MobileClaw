@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The main screen.
+
+  Structural changes from the previous layout, each fixing something that read as
+  unfinished rather than merely unstyled:
+
+  1. The old top bar crammed five controls into one row with maxLines="1" and
+     ellipsize="end", so the labels truncated. Permissions are not persistent controls —
+     they are setup state, dead weight the moment they are granted. They now live in a
+     strip that disappears once satisfied (MainActivity hides it), and Test / Clear have
+     moved into the overflow menu where developer affordances belong.
+
+  2. Agent run state was a grey strip below the fold of attention. It is the single most
+     important persistent fact on this screen — whether an autonomous process is running
+     on your phone — so it is now a live dot in the app bar.
+
+  3. The timeline sits in a sunken well with the trace rail down its left edge. That rail
+     is what makes the screen legible at a glance: autonomous events hang off it, human
+     conversation floats free of it.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true">
+
+    <!-- ============================ App bar ============================ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/appbar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/sp_2">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_wordmark"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/sp_2"
+            android:text="@string/app_name"
+            android:textAppearance="@style/Text.Wordmark" />
+
+        <!-- Run state. Dot + word, tappable, opening the pause/resume action. Reads as
+             a status readout rather than a button because that is what it mostly is —
+             you look at it far more often than you press it. -->
+        <LinearLayout
+            android:id="@+id/runStateChip"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginStart="@dimen/sp_3"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="@dimen/sp_2"
+            android:paddingEnd="@dimen/sp_2">
+
+            <View
+                android:id="@+id/runStateDot"
+                android:layout_width="@dimen/status_dot"
+                android:layout_height="@dimen/status_dot"
+                android:background="@drawable/dot_running" />
+
+            <TextView
+                android:id="@+id/runStateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textAppearance="@style/Text.Mono"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="Running" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/btnHistory"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_history"
+            android:scaleType="center"
+            android:contentDescription="@string/cd_history" />
+
+        <ImageButton
+            android:id="@+id/btnMore"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_vert"
+            android:scaleType="center"
+            android:contentDescription="@string/cd_more" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/hairline"
+        android:background="?attr/colorOutlineVariant" />
+
+    <!-- ======================== Setup strip ========================
+         Visible only while something needed is ungranted. MainActivity hides the whole
+         strip once every capability is satisfied, so a fully set-up device shows no
+         permanent nag — and, incidentally, screenshots cleanly. -->
+    <LinearLayout
+        android:id="@+id/setupStrip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginStart="@dimen/gutter"
+        android:layout_marginEnd="@dimen/gutter"
+        android:layout_marginTop="@dimen/sp_3"
+        android:background="@drawable/bg_setup_strip"
+        android:paddingStart="@dimen/sp_3"
+        android:paddingEnd="@dimen/sp_2"
+        android:paddingTop="@dimen/sp_2"
+        android:paddingBottom="@dimen/sp_2"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="@dimen/icon_sm"
+            android:layout_height="@dimen/icon_sm"
+            android:src="@drawable/ic_shield_person"
+            android:importantForAccessibility="no"
+            app:tint="?attr/colorPrimary"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <TextView
+            android:id="@+id/setupText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/sp_2"
+            android:textAppearance="@style/Text.Body.Muted"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Notification access is off" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetupAction"
+            style="@style/Widget.MC.Button.Text.Compact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/setup_grant" />
+    </LinearLayout>
+
+    <!-- ======================== Conversation ======================== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/sp_2"
+        android:paddingTop="@dimen/sp_3"
+        android:paddingBottom="@dimen/sp_1">
+
+        <TextView
+            android:id="@+id/sessionSwitcher"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="@dimen/sp_1"
+            android:paddingBottom="@dimen/sp_1"
+            android:drawablePadding="6dp"
+            android:contentDescription="@string/cd_switch_conversation"
+            android:textAppearance="@style/Text.Label"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="GENERAL CHAT AGENT · TODAY" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChatClear"
+            style="@style/Widget.MC.Button.Text.Compact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_clear" />
+    </LinearLayout>
+
+    <!-- The well. The rail is drawn by the item layouts rather than here, so it can
+         break correctly around bubbles instead of running behind them. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/gutter"
+        android:layout_marginEnd="@dimen/gutter"
+        android:background="@drawable/bg_well">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/chatList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="@dimen/sp_3"
+            android:paddingBottom="@dimen/sp_3"
+            android:scrollbars="none" />
+
+        <!-- Empty state. An empty screen is an invitation to act, not a dead end, so it
+             names the two things that actually start the system working. -->
+        <LinearLayout
+            android:id="@+id/emptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="@dimen/sp_8"
+            android:paddingEnd="@dimen/sp_8"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_wordmark"
+                android:alpha="0.35"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_3"
+                android:text="@string/empty_title"
+                android:textAppearance="@style/Text.Title" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sp_1"
+                android:gravity="center"
+                android:text="@string/empty_body"
+                android:textAppearance="@style/Text.Body.Muted" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ======================== Quick actions ======================== -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/sp_3"
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/gutter"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSummarize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/sp_1"
+                android:text="@string/chip_summarize" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipUrgent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/sp_1"
+                android:text="@string/chip_urgent" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipMessages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/sp_1"
+                android:text="@string/chip_messages" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDismiss"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/sp_1"
+                android:text="@string/chip_dismiss" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCatchUp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_catch_up" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:id="@+id/selectedPhotoBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/gutter"
+        android:layout_marginEnd="@dimen/gutter"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+        <ImageView
+            android:id="@+id/selectedPhotoThumbnail"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Selected photo" />
+        <TextView
+            android:id="@+id/selectedPhotoName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textAppearance="@style/Text.Body.Muted" />
+        <ImageButton
+            android:id="@+id/clearSelectedPhoto"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Clear selected photo" />
+    </LinearLayout>
+
+    <!-- ======================== Composer ======================== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:paddingStart="@dimen/gutter"
+        android:paddingEnd="@dimen/gutter"
+        android:paddingTop="@dimen/sp_3"
+        android:paddingBottom="@dimen/sp_3">
+
+        <EditText
+            android:id="@+id/chatInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_input"
+            android:hint="@string/composer_hint"
+            android:textColorHint="@color/mc_ink_faint"
+            android:textAppearance="@style/Text.Body"
+            android:paddingStart="@dimen/sp_3"
+            android:paddingEnd="@dimen/sp_3"
+            android:paddingTop="@dimen/sp_2"
+            android:paddingBottom="@dimen/sp_2"
+            android:minHeight="@dimen/touch_min"
+            android:gravity="center_vertical"
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:autofillHints="" />
+
+        <!-- Send and Stop occupy the same slot: only one is ever meaningful, and
+             swapping them in place means the control the user reaches for does not
+             move when a turn starts. -->
+        <FrameLayout
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
+            android:layout_marginStart="@dimen/sp_2">
+
+            <ImageButton
+                android:id="@+id/btnSend"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_send_selector"
+                android:src="@drawable/ic_send"
+                android:scaleType="center"
+                android:contentDescription="@string/cd_send"
+                app:tint="?attr/colorOnPrimary"
+                xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+            <ImageButton
+                android:id="@+id/btnStop"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_send"
+                android:src="@drawable/ic_stop"
+                android:scaleType="center"
+                android:visibility="gone"
+                android:contentDescription="@string/cd_stop" />
+        </FrameLayout>
+    </LinearLayout>
+
+</LinearLayout>

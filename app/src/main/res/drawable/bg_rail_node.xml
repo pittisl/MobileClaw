@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Node on the rail. Filled indigo with a ground-coloured ring so it reads as sitting
+     ON the rail rather than behind it. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+    <stroke android:width="3dp" android:color="?attr/colorSurfaceVariant" />
+    <size android:width="@dimen/rail_node" android:height="@dimen/rail_node" />
+</shape>

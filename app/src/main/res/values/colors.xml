@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nocturne — the light scheme.
+
+  Two rules govern this palette and both are load-bearing:
+
+  1. ONE hue. Indigo is the agent's identity and the only chromatic colour in the
+     interface. There is deliberately no second accent for "needs your attention" —
+     the confirm gate earns its prominence through value inversion (a near-black card
+     on an ivory ground), not through a warning colour. A second hue was tried and
+     made the interface look like a form validation error.
+
+  2. Nothing is pure. The ground is warm ivory rather than #FFFFFF and the ink is a
+     blue-cast near-black rather than #000000, because pure values read as "unstyled"
+     on a phone screen and flare under a projector.
+
+  Greyscale matters here: demo screenshots land in a two-column ACM paper and many
+  reviewers print in black and white. Indigo flattens to a dark grey that stays
+  clearly separated from both the ivory ground and the muted ink.
+-->
+<resources>
+
+    <!-- ===== Ground ===== -->
+    <color name="mc_surface">#FFF7F6F2</color>          <!-- warm ivory — the page -->
+    <color name="mc_surface_raised">#FFFFFFFF</color>   <!-- cards, assistant bubbles -->
+    <color name="mc_surface_sunken">#FFF0EFE8</color>   <!-- the timeline well -->
+
+    <!-- ===== Ink ===== -->
+    <color name="mc_ink">#FF16181F</color>              <!-- primary text -->
+    <color name="mc_ink_muted">#FF5C6270</color>        <!-- secondary text, labels -->
+    <color name="mc_ink_faint">#FF8A8F9C</color>        <!-- timestamps, token counts -->
+
+    <!-- ===== Structure ===== -->
+    <color name="mc_hairline">#FFE2E1DA</color>         <!-- rules, borders, the trace rail -->
+    <color name="mc_hairline_strong">#FFCFCEC5</color>  <!-- input outlines -->
+
+    <!-- ===== Indigo: the agent ===== -->
+    <color name="mc_primary">#FF232A5C</color>
+    <color name="mc_primary_pressed">#FF2E376F</color>
+    <color name="mc_on_primary">#FFFFFFFF</color>
+    <color name="mc_primary_wash">#FFE8E9F2</color>     <!-- selected chips, agent fills -->
+    <color name="mc_primary_edge">#FFC5C8DE</color>     <!-- border on washed surfaces -->
+
+    <!-- ===== Inversion: the confirm gate ===== -->
+    <color name="mc_inverse_surface">#FF16181F</color>
+    <color name="mc_inverse_ink">#FFF7F6F2</color>
+    <color name="mc_inverse_ink_muted">#FFA8ADBA</color>
+    <color name="mc_inverse_primary">#FF9AA3EE</color>  <!-- action text on the dark card -->
+
+    <!-- ===== State ===== -->
+    <color name="mc_paused">#FF8A8F9C</color>           <!-- the run-state dot when paused -->
+    <color name="mc_error">#FF8C2F39</color>
+    <color name="mc_error_wash">#FFF6E9EA</color>
+
+    <!-- Scrim behind the confirm sheet. Heavier than Material's default because the
+         gate is the one moment the rest of the interface must stop competing. -->
+    <color name="mc_scrim">#99101219</color>
+
+</resources>

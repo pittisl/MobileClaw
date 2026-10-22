@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- Lets us fire notification-button PendingIntents that start an Activity
+         (e.g. "Open", "Join") from the background: holding SYSTEM_ALERT_WINDOW
+         exempts the app from background-activity-start restrictions. Also used to
+         draw the confirm-gate overlay so background actions aren't dropped when no
+         Activity is foregrounded. Pure background buttons don't need it. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Capability Extension: outbound-action + context tools. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <!-- Special access, granted from Settings (not a runtime dialog). Declared so
+         it appears on the Usage-access screen. -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <!-- The file-search index reads shared storage directly. Under scoped
+         storage that takes "All files access", a special access granted from its own
+         Settings page; the runtime permission below is the API 26–29 equivalent. -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+
+    <!-- Backup stays on, but the rules files exclude the database from it. Both
+         attributes are required: without them the res/xml rule files are inert and
+         Android backs up everything in internal storage, database included. -->
+    <!-- Package visibility (API 30+): lets ShizukuOnboarding tell "Shizuku is installed
+         but not connected" from "not installed", and open it. Nothing else is queried. -->
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+    </queries>
+
+    <application
+        android:name=".MobileClawApp"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.MobileClaw"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Settings" />
+
+        <activity
+            android:name=".ModelServiceActivity"
+            android:exported="false"
+            android:label="@string/model_service_title"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- The audit trail, read-only. Unexported like SettingsActivity: it displays
+             the full record of what the agent has done to the device, so no other app
+             gets to launch it. -->
+        <activity
+            android:name=".ActionLogActivity"
+            android:exported="false"
+            android:label="Action history" />
+
+        <!-- What the agent remembers, with per-row delete. Unexported for the same
+             reason as the two above, and with more force: this table is the one that
+             can hold sensitive text the user typed, unredacted by design. -->
+        <activity
+            android:name=".MemoryActivity"
+            android:exported="false"
+            android:label="Memory" />
+
+        <!--
+          The notification listener service. Three things are required here:
+          1. android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+             — this is what tells the system this service is a notification listener.
+          2. The intent filter with action
+             "android.service.notification.NotificationListenerService"
+             — this is how NotificationManagerService discovers the listener.
+          3. android:exported="true" — required on API 31+ because the service
+             has an intent filter and is bound by the system from another process.
+        -->
+        <service
+            android:name=".NotifListener"
+            android:exported="true"
+            android:label="MobileClaw Notification Listener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Receives the broadcast PendingIntents on the synthetic test
+             notifications (NotificationTester) so a button press is observable.
+             Not exported: only our own test notifications target it. -->
+        <receiver
+            android:name=".TestActionReceiver"
+            android:exported="false" />
+
+        <!-- Approve / Reject on a background confirm-gate notification.
+             Must stay unexported: exported, it would be an approve-anything endpoint
+             any app on the device could invoke, which inverts the whole gate. The
+             PendingIntents that reach it are explicit and FLAG_IMMUTABLE. -->
+        <receiver
+            android:name=".ConfirmActionReceiver"
+            android:exported="false" />
+
+        <!-- Pause / Resume on the sticky run-state notification. Unexported
+             for the same reason as the one above: exported, any app on the device could
+             silence the agent or restart it behind the user's back, which inverts the
+             control this notification exists to give them. -->
+        <receiver
+            android:name=".RunStateReceiver"
+            android:exported="false" />
+
+        <!-- Only the explicit, immutable MMS sent PendingIntent can reach this. -->
+        <receiver
+            android:name=".skills.messaging.PhotoMmsSentReceiver"
+            android:exported="false" />
+
+        <!-- Controls the reasoning trace through explicit adb broadcasts.
+             The receiver is exported so the shell uid can reach it, and TraceReceiver refuses
+             all operations outside debug builds. Output is always redacted; logcat access
+             across apps is restricted by Android, while adb remains an authorized reader. -->
+        <receiver
+            android:name=".TraceReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="edu.pitt.isl.mobileclaw.TRACE_DUMP" />
+                <action android:name="edu.pitt.isl.mobileclaw.TRACE_ON" />
+                <action android:name="edu.pitt.isl.mobileclaw.TRACE_OFF" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Required by Shizuku: the manager uses this provider to hand our
+             process the service binder. It carries no data of ours and is guarded by a
+             signature-level system permission, so `exported="true"` here does not widen
+             our attack surface — nothing but the Shizuku server can bind it. Harmless
+             when Shizuku isn't installed. -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <!-- FileOpener: lets the viewer app read a file the user tapped in the
+             chat. Not exported; a read grant travels with each ACTION_VIEW intent and
+             nothing else can query it. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <provider
+            android:name=".skills.messaging.PhotoMmsProvider"
+            android:authorities="${applicationId}.mms"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/photo_mms_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

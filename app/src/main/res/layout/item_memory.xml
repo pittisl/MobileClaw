@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <!-- Provenance as a colour stripe, the same device the action log uses for
+             success/failure. Here it separates what the user said from what the model
+             guessed, which is the distinction this screen exists to make legible. -->
+        <View
+            android:id="@+id/provenanceBar"
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:minHeight="28dp"
+            android:layout_marginEnd="10dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurface"
+                android:maxLines="8"
+                android:ellipsize="end" />
+
+            <!-- Carries the provenance in words as well as colour, says when a memory
+                 was stored scrubbed, and says whether it is in the prompt of every turn.
+                 A user reading "we kept your number" when we replaced it with [REDACTED]
+                 would be misled about their own data. Three lines keep all clauses visible. -->
+            <TextView
+                android:id="@+id/meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:maxLines="3"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+        <!-- Pin: the user's own control over what the assistant is told on every turn.
+             Deliberately next to Forget rather than hidden in a menu — these are the two
+             ways a user corrects the store, one by removing a memory and one by promoting
+             it, and neither is discoverable if it isn't on the row. -->
+        <Button
+            android:id="@+id/pin"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:textSize="12sp" />
+
+        <!-- Per-row delete. A store the user cannot correct is one they can only watch
+             go wrong, and this one shapes future behaviour rather than merely recording
+             past behaviour. -->
+        <Button
+            android:id="@+id/forget"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:text="Forget"
+            android:textColor="?attr/colorError"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant" />
+
+</LinearLayout>

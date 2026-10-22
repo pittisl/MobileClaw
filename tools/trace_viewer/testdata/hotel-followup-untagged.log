@@ -1,0 +1,58 @@
+# Handwritten synthetic fixture for untagged logcat parsing. All content is fictional.
+01-01 09:00:00.000 I/MobileClaw-TRACE(1000): ════ TRIAGE ─ 09:00:00 ─ Demo Messages ════════════════════════
+01-01 09:00:00.001 I/MobileClaw-TRACE(1000): ▸ NOTIFICATION  Demo traveller
+01-01 09:00:00.002 I/MobileClaw-TRACE(1000):     Which hotel did we book?
+01-01 09:00:00.003 I/MobileClaw-TRACE(1000): ▸ DECISION  reply · high · confidence 0.90
+01-01 09:00:00.004 I/MobileClaw-TRACE(1000):     The fixture asks for a hotel booking.
+01-01 09:00:00.005 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
+01-01 09:00:01.000 I/MobileClaw-TRACE(1000): ════ CHAT TURN ─ 09:00:01 ─ Notification follow-up ════════════════════════
+01-01 09:00:01.001 I/MobileClaw-TRACE(1000): ▸ SYSTEM PROMPT  (20 chars, 1 tool offered)
+01-01 09:00:01.002 I/MobileClaw-TRACE(1000):     Synthetic assistant.
+01-01 09:00:01.003 I/MobileClaw-TRACE(1000): ▸ HISTORY  0 turn(s) kept, 0 dropped
+01-01 09:00:02.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  read_calendar  {"range_start":"2030-01-01T00:00:00"}
+01-01 09:00:02.001 I/MobileClaw-TRACE(1000): ════ TRIAGE ─ 09:00:02 ─ Demo Messages ════════════════════════
+01-01 09:00:02.002 I/MobileClaw-TRACE(1000): ▸ NOTIFICATION  Demo traveller
+01-01 09:00:02.003 I/MobileClaw-TRACE(1000):     Also check the arrival time.
+01-01 09:00:02.004 I/MobileClaw-TRACE(1000): ▸ DECISION  reply · normal · confidence 0.80
+01-01 09:00:02.005 I/MobileClaw-TRACE(1000):     The fixture adds a timing question.
+01-01 09:00:02.006 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
+01-01 09:00:03.000 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  read_calendar
+01-01 09:00:03.001 I/MobileClaw-TRACE(1000):     Demo arrival: 14:00 at Maple Inn.
+01-01 09:00:04.000 I/MobileClaw-TRACE(1000): ▸ ANSWER  (finish=stop · 100 in / 20 out)
+01-01 09:00:04.001 I/MobileClaw-TRACE(1000):     Your demo arrival is at 14:00.
+01-01 09:00:04.002 I/MobileClaw-TRACE(1000):     @@ACTIONS@@ Find the booking | Review arrival
+01-01 09:00:04.003 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
+01-01 09:01:00.000 I/MobileClaw-TRACE(1000): ════ TRIAGE ─ 09:01:00 ─ Demo Messages ════════════════════════
+01-01 09:01:00.001 I/MobileClaw-TRACE(1000): ▸ NOTIFICATION  Demo traveller
+01-01 09:01:00.002 I/MobileClaw-TRACE(1000):     What is the booking code?
+01-01 09:01:00.003 I/MobileClaw-TRACE(1000): ▸ DECISION  reply · high · confidence 0.90
+01-01 09:01:00.004 I/MobileClaw-TRACE(1000):     The fixture asks for a booking code.
+01-01 09:01:00.005 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
+01-01 09:01:01.000 I/MobileClaw-TRACE(1000): ════ CHAT TURN ─ 09:01:01 ─ Notification follow-up ════════════════════════
+01-01 09:01:01.001 I/MobileClaw-TRACE(1000): ▸ SYSTEM PROMPT  (20 chars, 3 tools offered)
+01-01 09:01:01.002 I/MobileClaw-TRACE(1000):     Synthetic assistant.
+01-01 09:01:02.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  read_calendar  {"range_start":"2030-01-01T00:00:00"}
+01-01 09:01:02.001 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  read_calendar
+01-01 09:01:02.002 I/MobileClaw-TRACE(1000):     Demo check-in: 15:00 at Maple Inn.
+01-01 09:01:03.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  recall  {"query":"hotel"}
+01-01 09:01:03.001 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  recall
+01-01 09:01:03.002 I/MobileClaw-TRACE(1000):     No saved demo memories.
+01-01 09:01:04.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  search_files  {"query":"Maple Inn"}
+01-01 09:01:04.001 I/MobileClaw-TRACE(1000): ════ TRIAGE ─ 09:01:04 ─ Demo Messages ════════════════════════
+01-01 09:01:04.002 I/MobileClaw-TRACE(1000): ▸ NOTIFICATION  Demo traveller
+01-01 09:01:04.003 I/MobileClaw-TRACE(1000):     Please include the hotel name.
+01-01 09:01:04.004 I/MobileClaw-TRACE(1000): ▸ DECISION  reply · normal · confidence 0.80
+01-01 09:01:04.005 I/MobileClaw-TRACE(1000):     The fixture adds a hotel-name question.
+01-01 09:01:04.006 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
+01-01 09:01:05.000 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  search_files
+01-01 09:01:05.001 I/MobileClaw-TRACE(1000):     demo-booking.txt: Maple Inn, booking DEMO42.
+01-01 09:01:06.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  search_files  {"query":"early check-in"}
+01-01 09:01:06.001 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  search_files
+01-01 09:01:06.002 I/MobileClaw-TRACE(1000):     No matching demo files.
+01-01 09:01:07.000 I/MobileClaw-TRACE(1000): ▸ TOOL CALL  search_files  {"query":"luggage"}
+01-01 09:01:07.001 I/MobileClaw-TRACE(1000): ▸ TOOL RESULT  search_files
+01-01 09:01:07.002 I/MobileClaw-TRACE(1000):     demo-services.txt: luggage storage is available.
+01-01 09:01:08.000 I/MobileClaw-TRACE(1000): ▸ ANSWER  (finish=stop · 200 in / 40 out)
+01-01 09:01:08.001 I/MobileClaw-TRACE(1000):     The demo booking is Maple Inn, code DEMO42.
+01-01 09:01:08.002 I/MobileClaw-TRACE(1000):     @@ACTIONS@@ Draft a reply with Maple Inn and DEMO42 | Review booking
+01-01 09:01:08.003 I/MobileClaw-TRACE(1000): ════════════════════════════════════════
