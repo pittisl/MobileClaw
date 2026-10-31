@@ -19,9 +19,10 @@ import edu.pitt.isl.mobileclaw.notiftest.Tool
  * confirms it — an AppFunction is arbitrary code with side effects in another app, and
  * this is exactly the case the confirm gate exists for.
  *
- * Discovery is not offered: this build's `cmd app_function` cannot list, and the Jetpack
- * reader returns nothing for packages we lack permission on. The tool's description names
- * the functions it knows.
+ * Discovery is not offered by this skill. Some newer Android 16 builds can list functions
+ * through `cmd app_function`, but older builds cannot. The description names known functions,
+ * including two optional system read queries verified on the Pixel 9 Pro; the callee still
+ * decides whether each is available. These reads retain the same confirmation gate.
  */
 class AppFunctionsSkill : Skill {
     override val id = "appfunctions"

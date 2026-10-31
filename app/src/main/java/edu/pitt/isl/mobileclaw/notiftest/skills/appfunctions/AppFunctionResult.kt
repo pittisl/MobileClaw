@@ -1,5 +1,7 @@
 package edu.pitt.isl.mobileclaw.notiftest.skills.appfunctions
 
+import org.json.JSONTokener
+
 /**
  * Turns what `cmd app_function execute-app-function` prints into what the model should
  * read. Pure Kotlin so the shapes below are a JVM test.
@@ -80,7 +82,7 @@ object AppFunctionResult {
             // in it is plumbing.
             val tree = try { Parser(text).value() } catch (_: Exception) { null } ?: return text
             val value = (tree as? Map<*, *>)?.let { if (it.containsKey(VALUE_KEY)) it[VALUE_KEY] else null } ?: return text
-            return "$name returned: " + renderValue(value, plumbing = false)
+            return "$name returned: " + (renderDeviceState(function, value) ?: renderValue(value, plumbing = false))
         }
         if (!text.startsWith(SUCCESS)) return text
         val dump = text.substringAfter(RETURN, "").trim()
@@ -88,6 +90,55 @@ object AppFunctionResult {
         val tree = try { Parser(dump).value() } catch (_: Exception) { null } ?: return text
         val value = (tree as? Map<*, *>)?.get("properties")?.let { (it as? Map<*, *>)?.get(VALUE_KEY) } ?: return text
         return "$name returned: " + renderValue(value, plumbing = true)
+    }
+
+    /**
+     * These system reads include settings-page intents and UI metadata. Keep the documented
+     * read scenarios legible without treating a missing state as off. Unrecognised response
+     * shapes still use the generic renderer; the command audit retains its bounded raw excerpt.
+     */
+    private fun renderDeviceState(function: String, value: Any?): String? {
+        val result = (value as? List<*>)?.singleOrNull() as? Map<*, *> ?: return null
+        fun string(v: Any?) = (v as? List<*>)?.singleOrNull() as? String
+        fun state(item: Map<*, *>): String? {
+            val json = string(item["jsonValue"]) ?: return null
+            return if (json.startsWith('"')) runCatching { JSONTokener(json).nextValue() as? String }.getOrNull() ?: json
+                else json
+        }
+        val itemFields = setOf("key", "purpose", "name", "jsonValue", "lastUpdatedEpochMillis", "hintText")
+        fun hint(item: Map<*, *>) = string(item["hintText"])?.takeIf { it.isNotBlank() }
+        if (function == "${CallAppFunctionTool.GMS_DEVICE_STATE}#getDeviceStateItem") {
+            if (result.keys.any { it != "deviceStateItem" }) return null
+            val item = (result["deviceStateItem"] as? List<*>)?.singleOrNull() as? Map<*, *> ?: return null
+            if (item.keys.any { it !in itemFields }) return null
+            if (string(item["key"]) != "quick_share_visibility") return null
+            return state(item)?.let { "Quick Share receive visibility: $it" + (hint(item)?.let { note -> "\nNote: $note" } ?: "") }
+        }
+        if (function != "${CallAppFunctionTool.WELLBEING_SERVICE}#getWellbeingDeviceState") return null
+        if (result.keys.any { it !in setOf("perScreenDeviceStates", "deviceLocale", "globalHintText") }) return null
+        val screens = result["perScreenDeviceStates"] as? List<*> ?: return null
+        if (screens.any { it !is Map<*, *> || it.keys.any { key -> key !in setOf("description", "deviceStateItems", "intentUri") } }) return null
+        val items = screens.flatMap { ((it as? Map<*, *>)?.get("deviceStateItems") as? List<*>).orEmpty() }
+            .filterIsInstance<Map<*, *>>()
+        if (items.any { it.keys.any { key -> key !in itemFields } }) return null
+        val fields = linkedMapOf(
+            "focusModeState" to "Focus Mode",
+            "focusModeSchedule" to "Focus Mode schedule",
+            "focusModeDistractingApps" to "Focus Mode distracting apps",
+            "bedtimeModeState" to "Bedtime Mode",
+            "bedtimeModeSchedule" to "Bedtime Mode schedule",
+            "appLimitPerApp" to "App timers (minutes per app)",
+        )
+        val states = fields.keys.associateWith { key ->
+            items.singleOrNull { string(it["key"]) == key }?.let(::state)
+        }
+        if (states.values.all { it == null }) return null
+        val lines = fields.map { (key, label) ->
+            val note = items.singleOrNull { string(it["key"]) == key }?.let(::hint)
+            "$label: ${states[key] ?: "(not reported)"}" + (note?.let { "\n  Note: $it" } ?: "")
+        }
+        val globalHint = string(result["globalHintText"])?.takeIf { it.isNotBlank() }
+        return "\n" + (lines + listOfNotNull(globalHint?.let { "Note: $it" })).joinToString("\n")
     }
 
     private fun renderValue(v: Any?, plumbing: Boolean): String = when (v) {

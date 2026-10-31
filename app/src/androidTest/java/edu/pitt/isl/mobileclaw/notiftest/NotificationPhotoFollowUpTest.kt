@@ -116,6 +116,54 @@ class NotificationPhotoFollowUpTest {
         epoch: Long = DemoReset.generation, timeoutMs: Long = 1_000, incoming: CapturedNotif = notification,
     ) = NotifListener().followUp(incoming, decision, epoch, target, client, listOf(reader), timeoutMs)
 
+    @Test fun smsSummaryAndMissingReplyActionsCannotProposeReplies() = runBlocking {
+        val listener = NotifListener()
+        val summary = notification.copy(isGroupSummary = true, actions = emptyList())
+        assertNull(listener.replyProposal(summary, decision))
+        assertNull(listener.replyProposal(notification.copy(actions = emptyList()), decision))
+        assertNotNull(listener.replyProposal(notification, decision))
+        val result = listener.followUp(summary, decision, DemoReset.generation,
+            client = model { _, _ -> error("A group summary must not call the model") }, catalog = emptyList())
+        assertNull(result.proposal)
+        // No proposal's execute callback is invoked in these tests.
+    }
+
+    @Test fun concurrentSmsConversationsQueueAndKeepSeparateCooldowns() = runBlocking {
+        val listener = NotifListener()
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        suspend fun draft(spec: AgentSpec) {
+            val tool = spec.tools.single { it.name == "draft_notification_reply" }
+            tool.onInvocationStarted()
+            tool.invoke(JSONObject().put("message", "Offline test draft only."))
+        }
+        val incoming = notification.copy(text = "Hello there")
+        val first = async(start = CoroutineStart.UNDISPATCHED) {
+            listener.followUp(incoming, decision, DemoReset.generation, client = model { spec, _ ->
+                entered.complete(Unit)
+                release.await()
+                draft(spec)
+                emit(AgentEvent.Done(ChatMessage(ChatMessage.Role.ASSISTANT, "Draft prepared.")))
+            }, catalog = emptyList())
+        }
+        entered.await()
+        val second = async(start = CoroutineStart.UNDISPATCHED) {
+            listener.followUp(incoming.copy(key = "other-sms-conversation"), decision, DemoReset.generation,
+                client = model { spec, _ ->
+                    draft(spec)
+                    emit(AgentEvent.Done(ChatMessage(ChatMessage.Role.ASSISTANT, "Second draft prepared.")))
+                }, catalog = emptyList())
+        }
+        assertFalse("Other conversations must wait, not be silently dropped", second.isCompleted)
+        release.complete(Unit)
+        assertNotNull(first.await().proposal)
+        assertNotNull(second.await().proposal)
+        val duplicate = listener.followUp(incoming, decision, DemoReset.generation,
+            client = model { _, _ -> error("Duplicate conversation must stay cooled down") }, catalog = emptyList())
+        assertNull(duplicate.proposal)
+        assertTrue(duplicate.managesReply)
+    }
+
     @Test fun automaticSearchPublishesTypedCandidatesAndSourceWithoutAUserMessageOrTextProposal() = runBlocking {
         val result = run(model { spec, history ->
             assertEquals(listOf(FollowUp.SEED), history.map { it.content })

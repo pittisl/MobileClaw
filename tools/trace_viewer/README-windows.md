@@ -45,6 +45,32 @@ The agent on the phone still needs its configured LLM endpoint and network acces
 
 ## At the booth
 
+### Desktop shortcut: three-phone selection
+
+The desktop `MobileClaw Trace.cmd` calls `start-trace-desktop.ps1` without a fixed
+serial. One authorized USB phone is selected automatically; several phones show a
+numbered menu with model labels **and serials**, distinguishing the two OnePlus 12Rs.
+The selector shows each device's reported model and ADB serial. The serial
+distinguishes two phones with the same model name.
+
+Run the desktop shortcut again after swapping phones. Each viewer stays bound to its
+selected serial, so an old page never silently starts showing another phone. A live
+viewer for the chosen serial is reused; viewers for other phones and unrelated
+services are left alone, with a free port selected from 8765 through 8775.
+USB-unapproved/offline devices are reported; no ready device produces actionable
+instructions instead of falling back to the old 12R.
+
+Optional desktop arguments: `-Serial SERIAL` selects explicitly; `-NoBrowser` suppresses
+opening a browser; `-CheckOnly` verifies ADB and phone selection without starting a
+viewer or enabling trace; `-NonInteractive` requires an explicit serial if several
+phones are ready. For simultaneous viewing, launch once for each phone.
+Device-free Windows checks: `powershell -NoProfile -File tools/trace_viewer/test-trace-devices.ps1`.
+
+The repository's lower-level `start-trace.cmd` below retains its existing strict
+single-device/default-port behavior; the desktop entry adds the interactive selection
+and viewer-port handling.
+
+
 From the repository's Windows PowerShell:
 
 ```powershell

@@ -24,8 +24,8 @@ class CallAppFunctionTool : Tool {
     override val name = "call_app_function"
     override val description =
         "Invoke a function another app exposes on Android's AppFunctions bus (Android 16+). " +
-            "Runs only after the user confirms; the return value is reported afterwards. Every parameter " +
-            "a function declares must be present (pass \"\" for an optional text). Known functions:\n" +
+            "Runs only after the user confirms, including read-only queries; the return value is reported afterwards. " +
+            "Use the parameter objects below; pass \"\" for TaskBoard's empty note. Known functions:\n" +
             "TaskBoard (package $TASKBOARD_PACKAGE, a task-list app with a coloured header): " +
             "$TASKBOARD_CLASS#addTask {title, note} adds a task and returns it with its id; " +
             "$TASKBOARD_CLASS#completeTask {id (integer)} marks it done and says so, or says why not; " +
@@ -38,7 +38,16 @@ class CallAppFunctionTool : Tool {
             "contactType is one of INDIVIDUAL, GROUP, ANY (use ANY unless told otherwise); returns contacts " +
             "with an endpointValue. $CHATAPP_SERVICE#sendMessage {endpointValue, messageBody} sends a chat " +
             "message; call searchContacts first to get the endpointValue. " +
-            "$CHATAPP_SERVICE#searchMessages {query, endpointValue?}."
+            "$CHATAPP_SERVICE#searchMessages {query, endpointValue?}.\n" +
+            "Optional system read-only queries (availability depends on the installed apps/device): " +
+            "Digital Wellbeing (package $WELLBEING_PACKAGE): $WELLBEING_SERVICE#getWellbeingDeviceState " +
+            "with parameters {\"getWellbeingDeviceStateParams\":{}} reads Focus Mode, Bedtime Mode, " +
+            "their schedules and per-app time limits; the returned summary covers those settings. " +
+            "Google Play services (package $GMS_PACKAGE): $GMS_DEVICE_STATE#getDeviceStateItem " +
+            "with parameters {\"getDeviceStateItemParams\":{\"key\":\"quick_share_visibility\"}} " +
+            "reads Quick Share receive visibility (HIDDEN means hidden). " +
+            "These queries do not change settings. Use exactly these read functions for these questions, " +
+            "never setDeviceStateItem. If unavailable, report the failure without trying to enable a function."
     override val parameters = JSONObject(
         """
         {
@@ -89,5 +98,9 @@ class CallAppFunctionTool : Tool {
         const val CHATAPP_SERVICE = "com.example.chatapp.appfunctions.BaseChatAppFunctionService"
         const val TASKBOARD_PACKAGE = "edu.pitt.isl.mobileclaw.taskboard"
         const val TASKBOARD_CLASS = "edu.pitt.isl.mobileclaw.taskboard.TaskBoardFunctions"
+        const val WELLBEING_PACKAGE = "com.google.android.apps.wellbeing"
+        const val WELLBEING_SERVICE = "com.google.android.apps.wellbeing.appfunctions.BaseWellbeingAppFunctionService"
+        const val GMS_PACKAGE = "com.google.android.gms"
+        const val GMS_DEVICE_STATE = "com.google.android.gms.appfunctions.GmsDeviceState"
     }
 }

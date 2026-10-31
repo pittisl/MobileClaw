@@ -13,10 +13,13 @@ Release files:
 
 | File | Purpose |
 |---|---|
-| `MobileClaw-0.1.apk` | Main app; Android 16+ recommended, Android 8.0+ minimum; arm64 phones and x86_64 emulators |
-| `TaskBoard-0.1.apk` | Optional companion app for the Android 16+ AppFunctions demo |
+| `MobileClaw-0.1.1.apk` | Main app; Android 16+ recommended, Android 8.0+ minimum; arm64 phones and x86_64 emulators |
+| `TaskBoard-0.1.1.apk` | Optional companion app for the Android 16+ AppFunctions demo |
 | `SHA256SUMS` | SHA-256 checksums of the two APKs |
 | `build-manifest.json` | Source revision, package IDs, sizes and signing certificate fingerprints |
+
+Version 0.1.1 uses version code 2 and the same signing certificate as 0.1, so it
+can update the earlier public release with `adb install -r` while retaining app data.
 
 Both APKs are signed release builds with debugging disabled. They contain no
 team API keys or private model endpoints. Configure your own model service after
@@ -32,7 +35,7 @@ MobileCLIP weights.
 
 ## Install on a phone
 
-1. Download `MobileClaw-0.1.apk` to the phone.
+1. Download `MobileClaw-0.1.1.apk` to the phone.
 2. Open it with the Android package installer. If prompted, allow installation
    from the browser or file manager used for this download.
 3. Open MobileClaw and follow the [quick start](quickstart.md) to configure a
@@ -51,16 +54,16 @@ With Android Platform Tools on a computer, select a device explicitly:
 
 ```bash
 adb devices
-adb -s SERIAL install -r MobileClaw-0.1.apk
+adb -s SERIAL install -r MobileClaw-0.1.1.apk
 # Optional; its AppFunctions demo needs Android 16+.
-adb -s SERIAL install -r TaskBoard-0.1.apk
+adb -s SERIAL install -r TaskBoard-0.1.1.apk
 ```
 
 ## Verify the download
 
 On Linux, run `sha256sum -c SHA256SUMS` in the download directory. On macOS use
 `shasum -a 256 -c SHA256SUMS`. Windows PowerShell can calculate a file's checksum
-with `Get-FileHash .\MobileClaw-0.1.apk -Algorithm SHA256` for comparison.
+with `Get-FileHash .\MobileClaw-0.1.1.apk -Algorithm SHA256` for comparison.
 
 The signing certificate SHA-256 fingerprint for both apps is:
 
@@ -71,8 +74,8 @@ The signing certificate SHA-256 fingerprint for both apps is:
 Android SDK Build Tools can independently inspect it:
 
 ```bash
-apksigner verify --verbose --print-certs MobileClaw-0.1.apk
-apksigner verify --verbose --print-certs TaskBoard-0.1.apk
+apksigner verify --verbose --print-certs MobileClaw-0.1.1.apk
+apksigner verify --verbose --print-certs TaskBoard-0.1.1.apk
 ```
 
 The package IDs are `edu.pitt.isl.mobileclaw.notiftest` and

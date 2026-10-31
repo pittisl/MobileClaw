@@ -38,8 +38,13 @@ is supplied to the background turn.
 The foreground handoff uses the photo flow: preview, **Use this photo**,
 an explicit sharing request, then image/recipient confirmation. Selection is bound
 to the conversation and image bytes. The follow-up admission rules still apply,
-including one turn per source app in each five-minute window; this integration
-does not make every photo-related notification start a search.
+including a five-minute window per reply-capable notification conversation, or
+per source app for other notifications. Admitted turns are serialized; group
+summary notifications do not enter triage. Missing reply inputs cannot create a
+reply proposal. Android 14+ activity-backed notification replies explicitly grant
+the sender launch privilege needed for dispatch, restricted to a visible sender
+on Android 16+. A successful dispatch reports handoff to the notification action;
+it does not provide a carrier delivery receipt.
 
 ```text
 Notification -> capture -> triage -> selected contextual follow-up -> suggestion

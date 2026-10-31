@@ -30,20 +30,18 @@ See the [demo setup guide](docs/demo.md) for reproducible examples.
 
 [Download the poster as a PDF](docs/media/poster.pdf).
 
-### See MobileClaw live at MobiCom 2026
+### Presented at MobiCom 2026
 
-Join us for an in-person demonstration of MobileClaw at ACM MobiCom 2026.
-
-- **When:** Thursday, October 29, 2026, 4:00–6:00 p.m. CDT (Austin local time),
-  during the Work in Progress II & Demos session.
-- **Where:** Shirley Bird Perry Ballroom, Texas Union, The University of Texas at
-  Austin, 2308 Whitis Ave, Austin, TX 78712, USA.
-
-Our presentation, **Demo: MobileClaw: A Notification-Driven, Human-Gated Mobile
-LLM Agent**, is demo **89** in the
+MobileClaw was demonstrated at ACM MobiCom 2026 on October 29, 2026, in Austin,
+Texas. The presentation, **Demo: MobileClaw: A Notification-Driven, Human-Gated
+Mobile LLM Agent**, is demo **89** in the
 [official demo listing](https://sigmobile.org/mobicom/2026/accepted_demos.html).
-See the [conference program](https://sigmobile.org/mobicom/2026/program.html) and
-[venue information](https://sigmobile.org/mobicom/2026/venue.html) for details.
+The poster, narrated video and reproducible walkthroughs remain available above.
+
+Version **0.1.1** incorporates the final demonstration updates: independent
+notification-reply conversations, Android activity-backed reply compatibility,
+optional system-state AppFunctions queries, and a portable Windows trace launcher.
+See the [release notes](CHANGELOG.md).
 
 ## What MobileClaw demonstrates
 

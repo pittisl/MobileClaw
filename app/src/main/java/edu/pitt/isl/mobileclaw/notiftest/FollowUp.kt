@@ -35,6 +35,11 @@ import java.util.Locale
  */
 object FollowUp {
 
+    /** Reply-capable conversations do not spend each other's five-minute window. */
+    fun cooldownKey(notif: CapturedNotif): String =
+        if (notif.actions.any { it.acceptsText }) "conversation:${notif.packageName}:${notif.key}"
+        else "app:${notif.packageName}"
+
     /** What the trace and the log call this turn; `ReasoningTrace` prints the spec's name. */
     const val DISPLAY_NAME = "Notification follow-up"
 
@@ -46,22 +51,13 @@ object FollowUp {
      */
     const val TIMEOUT_MS = 60_000L
 
-    /**
-     * At most one follow-up per app per five minutes. Messaging apps can repost the
-     * same notification, and personal-category or high-priority notifications can each
-     * qualify for a turn. The cooldown bounds that repeated cost; the runner's lock
-     * separately prevents concurrent follow-ups.
-     */
+    /** Five minutes per reply-capable conversation; other notifications remain per app. */
     const val COOLDOWN_MS = 5 * 60_000L
 
     /**
-     * The per-app window, kept apart from the listener so the rule is testable on the JVM.
-     * Keyed by package: a second conversation in the same app inside the window gets no
-     * follow-up either, which is the price of the cap (the booth's real-SMS scenarios, S5
-     * and S6, use Reset demo between visitors' texts). Callers pass a
-     * monotonic clock (`SystemClock.elapsedRealtime`), so a wall-clock change can neither
-     * reopen the window nor hold it shut. In memory: a process restart reopens it, which
-     * costs at most one extra turn.
+     * Callers supply cooldownKey and monotonic elapsed time. Reposts of the same
+     * conversation stay bounded; another conversation can prepare its own draft.
+     * The runner serializes turns and reset/disconnect cancels queued work.
      */
     class Cooldown(private val periodMs: Long = COOLDOWN_MS) {
         private val started = HashMap<String, Long>()
@@ -70,12 +66,12 @@ object FollowUp {
         @Synchronized
         fun clear() = started.clear()
 
-        /** True, and the window starts, when [packageName] has had no follow-up for [periodMs]. */
+        /** True, and the window starts, when [key] has had no follow-up for [periodMs]. */
         @Synchronized
-        fun tryStart(packageName: String, nowMs: Long): Boolean {
-            val last = started[packageName]
+        fun tryStart(key: String, nowMs: Long): Boolean {
+            val last = started[key]
             if (last != null && nowMs - last < periodMs) return false
-            started[packageName] = nowMs
+            started[key] = nowMs
             return true
         }
     }

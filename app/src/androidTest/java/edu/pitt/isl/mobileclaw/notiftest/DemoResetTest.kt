@@ -216,6 +216,12 @@ class DemoResetTest {
         val listener = NotifListener.instance
         assumeNotNull("enable with -e listenerReset true", listener)
         val service = listener!!
+        val oldDecision = ActionDecision.fallback("reset-history-${System.nanoTime()}", "previous demo round")
+        DecisionStore.add(oldDecision)
+        awaitUntil { DecisionStore.decisions.value.any { it.notificationKey == oldDecision.notificationKey } }
+        val history = ReasoningModule::class.java.getDeclaredMethod("historyForPrompt").apply { isAccessible = true }
+        assertTrue("the persisted fixture must be visible before reset",
+            (history.invoke(ReasoningModule(apiKey = "")) as List<*>).contains(oldDecision))
         val oldEpoch = DemoReset.generation
         val field = NotifListener::class.java.getDeclaredField("serviceScope").apply { isAccessible = true }
         val scope = field.get(service) as CoroutineScope
@@ -255,12 +261,22 @@ class DemoResetTest {
         assertTrue("even a detached old listener cannot publish", ChatStore.messages.value.isEmpty())
         assertTrue("reset removes the old app window", cooldown.tryStart("fixture", 1001))
         assertFalse("the ordinary window resumes", cooldown.tryStart("fixture", 1002))
-        // Also cover first lazy initialization after reset: an old persisted audit row
-        // must not become the next round's prompt history.
-        val lazyField = NotifListener::class.java.getDeclaredField("reasoningModuleLazy").apply { isAccessible = true }
-        val module = (lazyField.get(service) as Lazy<*>).value!!
-        val history = ReasoningModule::class.java.getDeclaredMethod("historyForPrompt").apply { isAccessible = true }
-        assertTrue((history.invoke(module) as List<*>).isEmpty())
+        // Both first use after reset and a later model-config revision must exclude
+        // the previous round's persisted history. Constructing a client makes no request.
+        val factory = NotifListener::class.java.getDeclaredMethod("reasoningModule", LlmSnapshot::class.java)
+            .apply { isAccessible = true }
+        val fixture = LlmSnapshot(LlmProfile.preset(LlmProvider.OPENAI), Long.MIN_VALUE)
+        try {
+            val first = factory.invoke(service, fixture) as ReasoningModule
+            assertTrue((history.invoke(first) as List<*>).isEmpty())
+            assertSame(first, factory.invoke(service, fixture))
+            val changed = factory.invoke(service, fixture.copy(revision = fixture.revision + 1)) as ReasoningModule
+            assertNotSame("a new configuration must create a new client", first, changed)
+            assertTrue("a new client must retain the demo-reset boundary",
+                (history.invoke(changed) as List<*>).isEmpty())
+        } finally {
+            factory.invoke(service, LlmConfig.snapshot())
+        }
     }
 
     @Test fun triageResetDropsDedupAndOldPromptContextWithoutDeletingDecisions() = runBlocking {

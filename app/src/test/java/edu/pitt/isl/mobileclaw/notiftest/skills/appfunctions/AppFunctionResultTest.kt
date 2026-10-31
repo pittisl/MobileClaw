@@ -223,6 +223,74 @@ class AppFunctionResultTest {
     }
 
     @Test
+    fun `wellbeing summary decodes string values and leaves unavailable states explicit`() {
+        // Shape captured from Digital Wellbeing on the Pixel 9 Pro. The timer map is fictional.
+        val raw = """
+            {"androidAppfunctionsReturnValue":[{"perScreenDeviceStates":[
+              {"intentUri":["intent:settings-page"],"deviceStateItems":[
+                {"key":["focusModeState"],"jsonValue":["\"NO ACCESS\""]},
+                {"key":["focusModeSchedule"],"jsonValue":["\"No schedule set\""]},
+                {"key":["focusModeDistractingApps"],"jsonValue":["\"[]\""]}
+              ]},
+              {"deviceStateItems":[
+                {"key":["bedtimeModeState"],"jsonValue":["\"OFF\""]},
+                {"key":["appLimitPerApp"],"jsonValue":["\"{com.example.reader=30}\""]}
+              ]}
+            ]}]}
+        """.trimIndent()
+        val out = AppFunctionResult.render("${CallAppFunctionTool.WELLBEING_SERVICE}#getWellbeingDeviceState", raw)
+        assertEquals("getWellbeingDeviceState returned: \n" + """
+            Focus Mode: NO ACCESS
+            Focus Mode schedule: No schedule set
+            Focus Mode distracting apps: []
+            Bedtime Mode: OFF
+            Bedtime Mode schedule: (not reported)
+            App timers (minutes per app): {com.example.reader=30}
+        """.trimIndent(), out)
+        assertFalse(out.contains("intent:"))
+    }
+
+    @Test
+    fun `quick share displays the reported value without assuming that it is hidden`() {
+        fun response(value: String) = """{"androidAppfunctionsReturnValue":[{"deviceStateItem":[{"key":["quick_share_visibility"],"jsonValue":["$value"]}]}]}"""
+        val function = "${CallAppFunctionTool.GMS_DEVICE_STATE}#getDeviceStateItem"
+        assertEquals("getDeviceStateItem returned: Quick Share receive visibility: HIDDEN",
+            AppFunctionResult.render(function, response("HIDDEN")))
+        assertEquals("getDeviceStateItem returned: Quick Share receive visibility: FUTURE_VALUE",
+            AppFunctionResult.render(function, response("FUTURE_VALUE")))
+    }
+
+    @Test
+    fun `known state does not hide warnings or partial failure`() {
+        val function = "${CallAppFunctionTool.WELLBEING_SERVICE}#getWellbeingDeviceState"
+        val raw = """{"androidAppfunctionsReturnValue":[{"globalHintText":["Some settings require setup"],"perScreenDeviceStates":[{"deviceStateItems":[{"key":["appLimitPerApp"],"jsonValue":["{com.example.reader=0}"],"hintText":["A 0-minute limit means the app cannot be used."]}]}]}]}"""
+        val out = AppFunctionResult.render(function, raw)
+        assertTrue(out, out.contains("com.example.reader=0"))
+        assertTrue(out, out.contains("A 0-minute limit means the app cannot be used."))
+        assertTrue(out, out.contains("Some settings require setup"))
+        val failed = raw.replace("\"globalHintText\"", "\"error\"")
+        val fallback = AppFunctionResult.render(function, failed)
+        assertTrue(fallback, fallback.contains("error: Some settings require setup"))
+        assertTrue(fallback, fallback.contains("com.example.reader=0"))
+        val itemFailure = raw.replace("\"hintText\"", "\"status\"")
+        assertTrue(AppFunctionResult.render(function, itemFailure).contains("status:"))
+    }
+
+    @Test
+    fun `unknown device state shapes and other functions retain their returned evidence`() {
+        val raw = """{"androidAppfunctionsReturnValue":[{"error":["Access denied"],"status":["NO ACCESS"]}]}"""
+        val wellbeing = AppFunctionResult.render("${CallAppFunctionTool.WELLBEING_SERVICE}#getWellbeingDeviceState", raw)
+        assertTrue(wellbeing, wellbeing.contains("error: Access denied"))
+        assertTrue(wellbeing, wellbeing.contains("status: NO ACCESS"))
+        assertFalse(wellbeing.contains("OFF"))
+        val other = """{"androidAppfunctionsReturnValue":[{"deviceStateItem":[{"key":["another_setting"],"jsonValue":["false"]}]}]}"""
+        val out = AppFunctionResult.render("${CallAppFunctionTool.GMS_DEVICE_STATE}#getDeviceStateItem", other)
+        assertTrue(out, out.contains("another_setting"))
+        assertTrue(out, out.contains("false"))
+        assertFalse(out.contains("Quick Share"))
+    }
+
+    @Test
     fun `an unfamiliar shape comes back verbatim rather than lost`() {
         val odd = "App function executed successfully.\nFunction return:\n<<binary>>"
         assertEquals(odd, AppFunctionResult.render("x.F#odd", odd))

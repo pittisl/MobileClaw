@@ -39,9 +39,11 @@ the resulting notification and the action-history entry.
 
 Check the status strip if no background result arrives. Notification access, the
 pause state and model configuration each affect whether background triage runs.
-Not every notification qualifies for a contextual follow-up. At most one follow-up
-starts per source app in a five-minute window; clearing the chat does not reset
-this cooldown. A second conversation in the same messaging app shares that limit.
+Not every notification qualifies for a contextual follow-up. Reply-capable notification conversations each have a five-minute follow-up
+window, so one conversation does not consume another conversation's allowance.
+Other notifications share a window per source app. Qualifying turns queue behind
+the active turn; clearing the chat does not reset the cooldown. Group-summary
+notifications do not trigger triage.
 
 ## 2. Local documents and calendar
 
@@ -90,6 +92,10 @@ TaskBoard is a small demo app included in this repository. The example demonstra
 execution through a cooperating app's declared functions. Each additional target
 app must expose compatible functions before MobileClaw can call them.
 
+For compatible Pixel/system-app versions, the same confirmation path can also
+read Digital Wellbeing settings and Quick Share receive visibility. See the
+[system AppFunctions examples](../tools/README-system-appfunctions-demo.md).
+
 ## 4. Photo request to candidate cards
 
 Use an Android phone with a configured model, notification access and shared-file
@@ -118,9 +124,10 @@ without sending an MMS.
 
    Let background assistance handle the notification. A qualifying follow-up can
    search and show real candidate cards without a foreground search request.
-   Allow at least five minutes since the previous follow-up from that same app.
-   Triage admission, model decisions and an already-running follow-up can still
-   prevent a new suggestion; this is not an every-notification trigger.
+   Allow at least five minutes since the previous follow-up for that conversation
+   when its notification supports text replies; otherwise the window applies to
+   the source app. Admitted turns wait for the active follow-up to finish.
+   Triage admission and model decisions still determine whether a suggestion appears.
 4. Open the candidate in MobileClaw and inspect it. Tap **Use this photo**. The
    result remains in the conversation selected when the notification arrived,
    even if you switch chats while the model works. Return to that conversation

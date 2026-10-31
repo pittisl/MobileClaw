@@ -224,7 +224,11 @@ installed apps' functions or operate apps that expose no compatible interface.
 |---|---|---|
 | `call_app_function` | Invoke a cooperating app's declared function and return its result | Always confirm, including functions that only read data |
 
-See the [TaskBoard walkthrough](demo.md#3-structured-cross-app-execution-with-taskboard)
+Known optional system queries read Digital Wellbeing Focus Mode, Bedtime Mode
+and app limits, or Quick Share receive visibility. They require compatible system
+app versions and retain the same confirmation gate. See the
+[system AppFunctions walkthrough](../tools/README-system-appfunctions-demo.md),
+[TaskBoard walkthrough](demo.md#3-structured-cross-app-execution-with-taskboard)
 and [architecture](architecture.md) for the execution path.
 
 ## Catalog scope

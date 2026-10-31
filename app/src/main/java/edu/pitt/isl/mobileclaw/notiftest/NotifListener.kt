@@ -200,8 +200,8 @@ class NotifListener : NotificationListenerService() {
         if (sbn.packageName == packageName && notification.channelId in INFRA_CHANNELS) return
         // The ranker's auto-generated group summary (tag `ranker_group`) carries no text of
         // its own once an app has posted enough notifications; triaging it is an LLM call
-        // spent on an empty record. Summaries *with* text ("3 new messages") still go
-        // through — some apps put real content there.
+        // spent on an empty record. Summaries with text remain captured for inspection, but never start
+        // automatic triage or reply preparation; their child notifications do.
         if (notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY != 0) {
             val ex = notification.extras
             val summaryTitle = ex?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString().orEmpty()
@@ -332,6 +332,7 @@ class NotifListener : NotificationListenerService() {
             progressCurrent = progressCurrent,
             isProgressIndeterminate = isProgressIndeterminate,
             actions = actions,
+            isGroupSummary = notification.flags and Notification.FLAG_GROUP_SUMMARY != 0,
             visualAssets = visualAssets
         )
 
@@ -339,7 +340,7 @@ class NotifListener : NotificationListenerService() {
         NotifStore.add(captured)
 
         // Only reason about genuinely new notifications — not removals or stale startup ones.
-        if (posted && captured.key !in startupKeys) {
+        if (posted && captured.key !in startupKeys && !captured.isGroupSummary) {
             val epoch = DemoReset.generation
             val target = FollowUpSession.capture()
             serviceScope.launch {
@@ -432,19 +433,18 @@ class NotifListener : NotificationListenerService() {
         timeoutMs: Long? = null,
         config: LlmSnapshot = LlmConfig.snapshot(),
     ): FollowUpResult {
-        if (!AppSettings.followUp || !FollowUp.shouldRun(notif, decision)) return FollowUpResult()
+        if (notif.isGroupSummary || !AppSettings.followUp || !FollowUp.shouldRun(notif, decision)) return FollowUpResult()
         val draft = if (NotificationReplyDraft.eligible(notif, decision))
             NotificationReplyDraft(NotificationContextRequirements.readersFor("${notif.title}\n${notif.text}")) else null
         // A notification is not permission to reuse an earlier foreground selection.
         val photos = PhotoTurn(target.id, selectedPhoto = null)
         val photoSuggestion = NotificationPhotoSuggestion(photos, draft)
         fun withheld() = FollowUpResult(managesReply = draft != null || photoSuggestion.requested)
-        if (!followUpMutex.tryLock()) {
-            Log.i(TAG, "Follow-up already running — skipping ${notif.appName}")
-            return withheld()
-        }
+        // Serialize distinct conversations instead of dropping a message while another
+        // turn holds the shared context. Service reset/disconnect cancels these waiters.
+        followUpMutex.lock()
         try {
-            if (!followUpCooldown.tryStart(notif.packageName, SystemClock.elapsedRealtime())) {
+            if (!followUpCooldown.tryStart(FollowUp.cooldownKey(notif), SystemClock.elapsedRealtime())) {
                 Log.i(TAG, "Follow-up for ${notif.appName} skipped: one ran in the last ${FollowUp.COOLDOWN_MS / 60_000} min")
                 return withheld()
             }
@@ -544,14 +544,9 @@ class NotifListener : NotificationListenerService() {
                 )
             }
             ActionDecision.Action.REPLY -> {
-                if (decision.replyText.isBlank()) return
+                val proposal = replyProposal(notif, decision) ?: return
                 Log.d(TAG, "Proposing REPLY for $key")
-                PendingAction.propose(
-                    PendingAction.Proposal(
-                        description = "Reply to $label: \"${decision.replyText}\"",
-                        execute = { replyByKey(key, decision.replyText) }
-                    )
-                )
+                PendingAction.propose(proposal)
             }
             ActionDecision.Action.CLICK_ACTION -> {
                 if (decision.actionTitle.isBlank()) return
@@ -569,6 +564,16 @@ class NotifListener : NotificationListenerService() {
 
     // ---- Agent-invoked actions (Action Module). Called from tools via the static
     // ---- [instance]; user confirmation is handled upstream by PendingAction. ----
+
+    internal fun replyProposal(notif: CapturedNotif, decision: ActionDecision): PendingAction.Proposal? {
+        if (notif.isGroupSummary || !NotificationReplyDraft.eligible(notif, decision) || decision.replyText.isBlank()) return null
+        val label = notif.appName + " — " + ReasoningModule.redact(notif.title)
+        return PendingAction.Proposal(
+            description = "Reply to $label: \"${decision.replyText}\"",
+            allowFullAutomation = false,
+            execute = { executeReply(notif.key, decision.replyText, expectedPostTime = notif.postTimeMs) },
+        )
+    }
 
     fun dismissByKey(key: String): String {
         cancelNotification(key)
@@ -665,10 +670,10 @@ class NotifListener : NotificationListenerService() {
         }
 
         return try {
-            replyAction.actionIntent.send(this, 0, fillRemoteInput(replyAction.remoteInputs!!, replyText))
-            Log.i(TAG, "Reply sent to $notificationKey: \"$replyText\"")
-            ActionLogStore.record(appName, notificationKey, actionTitle, replyText, "Reply sent.", success = true)
-            "Reply sent."
+            NotificationReplyTransport.send(this, replyAction.actionIntent, fillRemoteInput(replyAction.remoteInputs!!, replyText))
+            Log.i(TAG, "Reply submitted to $notificationKey: \"$replyText\"")
+            ActionLogStore.record(appName, notificationKey, actionTitle, replyText, NotificationReplyTransport.SUBMITTED, success = true)
+            NotificationReplyTransport.SUBMITTED
         } catch (e: PendingIntent.CanceledException) {
             Log.e(TAG, "Reply PendingIntent cancelled for $notificationKey", e)
             val result = "Reply failed — the app cancelled the action."
@@ -731,7 +736,8 @@ data class CapturedNotif(
     val progressMax: Int = 0,
     val isProgressIndeterminate: Boolean = false,
     val actions: List<NotifAction> = emptyList(),
-    val visualAssets: Map<String, Bitmap> = emptyMap()
+    val visualAssets: Map<String, Bitmap> = emptyMap(),
+    val isGroupSummary: Boolean = false,
 ) {
     fun toLogLine(): String {
         val stamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(postTimeMs))

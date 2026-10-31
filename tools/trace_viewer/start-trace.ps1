@@ -27,6 +27,9 @@ function Resolve-Python {
         $candidates += @{ Name = 'py.exe'; Prefix = '-3 ' }
         $candidates += @{ Name = 'python.exe'; Prefix = '' }
         $candidates += @{ Name = 'python3.exe'; Prefix = '' }
+        if ($env:USERPROFILE) {
+            $candidates += @{ Name = (Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'); Prefix = '' }
+        }
     }
     foreach ($candidate in $candidates) {
         $command = Get-Command $candidate.Name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1

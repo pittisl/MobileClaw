@@ -48,8 +48,8 @@ android {
         applicationId = "edu.pitt.isl.mobileclaw.notiftest"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.1.1"
 
         // Required for anything under src/androidTest to run at all — without it
         // connectedDebugAndroidTest has no runner and silently does nothing.
