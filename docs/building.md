@@ -124,7 +124,7 @@ not provide a Notion token field.
 
 ## Tests
 
-JVM tests cover pure logic and the real streaming/tool loop driven by canned
+Ordinary JVM tests cover pure logic and the real streaming/tool loop driven by canned
 MockWebServer responses. They do not need a model API key. Framework behavior,
 database migrations and live Android APIs use instrumented tests:
 
@@ -139,10 +139,12 @@ Filter an instrumented class with
 `-Pandroid.testInstrumentationRunnerArguments.class=fully.qualified.ClassName`;
 the connected-test task does not accept JVM `--tests` filtering.
 
-The live-model evaluation runner is explicitly opt-in and is skipped by ordinary
-device tests. Its [guide](../tools/eval/README.md) explains how to evaluate an
-endpoint with real prompts and tools. Build/test success is separate from the
-quality of a live model's decisions.
+Live API checks require an explicit opt-in. The
+[Gemini protocol acceptance runner](../tools/eval/README.md#gemini-protocol-acceptance)
+uses JVM tests to check streaming, dependent tool calls, signature replay, JSON,
+and image input against the Gemini API. Ordinary JVM runs skip these live cases.
+The [device evaluation runner](../tools/eval/README.md) evaluates an endpoint with
+the production prompts and tool catalog; ordinary device tests skip it.
 
 For new tests, keep pure logic in `src/test/` and behavior depending on `Context`,
 SQLite or other live Android APIs in `src/androidTest/`. JVM Android stubs return

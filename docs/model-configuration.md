@@ -12,9 +12,9 @@ The Base URL is the API prefix, such as `https://api.openai.com/v1/` or
 re-enter a credential intended for that address. Requests do not follow redirects.
 
 **Test connection** sends only built-in synthetic prompts. It separately checks
-streaming text, a complete tool-call round trip with a synthetic result, structured JSON for notification
-triage, and (when enabled) a small synthetic image. No actual device tools run and
-no notification, memory, chat history or photo is included. A passing probe verifies
+streaming text, a complete tool-call round trip with a synthetic result, structured
+JSON for notification triage, and (when enabled) a small synthetic image. No actual
+device tools run and no notification, memory, chat history or photo is included. A passing probe verifies
 these small examples, not the model's reliability on arbitrary agent tasks.
 Saving alone does not run the probe.
 
@@ -89,59 +89,31 @@ To try the implemented integration, follow the
 [Notion build configuration](building.md#enable-notion-in-your-own-build)
 to compile a debug APK with your own token and grant access to your pages.
 
-## Gemini 3.5 Flash-Lite migration (2026-11-02)
+## Gemini
 
-The Gemini preset uses `gemini-3.5-flash-lite`. At startup, saved profiles using
-`gemini-2.5-flash` on Google's official HTTPS host are upgraded and saved, including
-inactive profiles and development seeds. Credentials, provider selection, and
-other profile settings are preserved. Custom endpoints keep their chosen model.
-
-The OpenAI-compatible transport preserves each tool call's
-`extra_content.google.thought_signature` across streaming chunks and whole-body
-responses, and returns it with the assistant tool-call message. Tool results carry
-both the matching call ID and function name. Calls within an agent turn retain
-these messages; subsequent user turns use the existing settled conversation history.
-When a required preparation step is missing, continuation retries from the last
-user/tool input with a system reminder, avoiding unsupported assistant prefills.
+The Gemini preset uses `gemini-3.5-flash-lite` with Google's OpenAI-compatible
+endpoint. At startup, saved profiles using `gemini-2.5-flash` on Google's official
+HTTPS host are upgraded to this model, including inactive profiles and development
+seeds. Credentials, provider selection, and other settings are preserved. Custom
+endpoints keep their chosen model.
 
 Tool requests use `reasoning_effort: medium`. JSON-only notification triage and
-memory consolidation use the model's default thinking level. All official
-3.5 Flash-Lite request paths omit `temperature`, `top_p`, and `top_k`.
+memory consolidation use the model's default thinking level. Requests to the
+official 3.5 Flash-Lite endpoint omit `temperature`, `top_p`, and `top_k`.
 
-Google's November 2 retirement email announces that old-model requests redirect to
-3.5 Flash-Lite on December 1, 2026. The protocol changes follow Google's
-[Flash-Lite migration guide](https://aistudio.google.com/docs/whats-new-gemini-3.6),
-[OpenAI compatibility guide](https://aistudio.google.com/docs/openai), and
+The client preserves each tool call's `extra_content.google.thought_signature`
+across streaming chunks and whole-body responses, and sends it back with the
+assistant tool-call message. Tool results include the matching call ID and function
+name. These messages are retained throughout an agent turn. If a required
+preparation step is missing, the client retries from the last user or tool input
+with a system reminder.
+
+The connection probe accepts completed tool calls with either `tool_calls` or
+`stop` as the finish reason and verifies the response after returning a synthetic
+tool result. It rejects truncated and filtered responses.
+
+For live compatibility checks, follow the
+[Gemini protocol acceptance instructions](../tools/eval/README.md#gemini-protocol-acceptance).
+The implementation follows Google's
+[OpenAI compatibility guide](https://aistudio.google.com/docs/openai) and
 [thought signature specification](https://ai.google.dev/gemini-api/docs/generate-content/thought-signatures).
-Historical experiment reports and archived demo APKs retain their original model.
-
-Validation on 2026-11-02: `:app:compileDebugKotlin` and
-`:app:testDebugUnitTest` succeeded in both source repositories. The development
-checkout passed 464 tests; the public checkout passed 461 with one CLIP tokenizer
-test skipped because its local model assets are absent. Regression cases cover
-signature replay, parallel and non-streamed calls, saved-profile upgrades,
-complete connection probes, and preparation retries without assistant prefills.
-Live API acceptance completed on 2026-11-02 at 18:08 America/New_York. The runner
-resolved the API through `dns.google` and supplied the resulting addresses only to
-the test JVM, preserving the official HTTPS hostname and certificate checks.
-
-- The production streaming agent loop passed twice, each with three model requests
-  and two dependent tool calls. A fresh random challenge flowed from the first
-  result into the second call; the final answer matched the second tool's receipt.
-- Whole-body parsing passed the same three-request chain with two signatures.
-  Removing the first signature deliberately returned HTTP 400; preserving both
-  allowed the chain to finish.
-- The actual connection probe passed text, tool-result continuation, triage JSON,
-  and a synthetic image. Live responses exposed a compatibility issue: Gemini
-  returns valid tool calls with `finish_reason: stop`. The probe now accepts that
-  completed shape while still rejecting `length` and `content_filter`.
-
-The three live acceptance tests passed with no skips. Their final run verified 14 successful API
-responses and the deliberate HTTP 400 rejection. Reproduce with
-`bash tools/eval/run_gemini_acceptance.sh` and a development Gemini key in
-`local.properties`. The test suite uses only synthetic data and runs live requests
-only through this explicit opt-in runner. Normal JVM runs skip these three tests.
-
-After the live fix, ordinary compilation and JVM tests passed in both repositories:
-466 development tests passed with the three live cases skipped; 463 public tests
-passed with the three live cases and the CLIP tokenizer asset case skipped.
