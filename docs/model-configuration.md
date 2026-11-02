@@ -121,6 +121,27 @@ checkout passed 464 tests; the public checkout passed 461 with one CLIP tokenize
 test skipped because its local model assets are absent. Regression cases cover
 signature replay, parallel and non-streamed calls, saved-profile upgrades,
 complete connection probes, and preparation retries without assistant prefills.
-A live synthetic Gemini probe could not reach the API because this workstation's
-DNS could not resolve `generativelanguage.googleapis.com`. Run **Test connection**
-on a network-enabled installation to complete live service validation.
+Live API acceptance completed on 2026-11-02 at 18:08 America/New_York. The runner
+resolved the API through `dns.google` and supplied the resulting addresses only to
+the test JVM, preserving the official HTTPS hostname and certificate checks.
+
+- The production streaming agent loop passed twice, each with three model requests
+  and two dependent tool calls. A fresh random challenge flowed from the first
+  result into the second call; the final answer matched the second tool's receipt.
+- Whole-body parsing passed the same three-request chain with two signatures.
+  Removing the first signature deliberately returned HTTP 400; preserving both
+  allowed the chain to finish.
+- The actual connection probe passed text, tool-result continuation, triage JSON,
+  and a synthetic image. Live responses exposed a compatibility issue: Gemini
+  returns valid tool calls with `finish_reason: stop`. The probe now accepts that
+  completed shape while still rejecting `length` and `content_filter`.
+
+The three live acceptance tests passed with no skips. Their final run verified 14 successful API
+responses and the deliberate HTTP 400 rejection. Reproduce with
+`bash tools/eval/run_gemini_acceptance.sh` and a development Gemini key in
+`local.properties`. The test suite uses only synthetic data and runs live requests
+only through this explicit opt-in runner. Normal JVM runs skip these three tests.
+
+After the live fix, ordinary compilation and JVM tests passed in both repositories:
+466 development tests passed with the three live cases skipped; 463 public tests
+passed with the three live cases and the CLIP tokenizer asset case skipped.

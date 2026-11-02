@@ -81,3 +81,18 @@ on-phone inference performance.
   production triage also excludes them.
 - Read model answers alongside tool calls: describing an action does not execute its
   tool. Results on these fixed tasks do not establish general agent reliability.
+
+## Gemini protocol acceptance
+
+Run `bash tools/eval/run_gemini_acceptance.sh` to make live, billed requests to
+`gemini-3.5-flash-lite` using the development `LLM_API_KEY` in `local.properties`.
+It runs the production Kotlin streaming agent loop with two dependent synthetic
+tools, verifies non-streaming signature replay and a missing-signature HTTP 400
+control, then runs the application's text/tool/JSON/image connection probe.
+Normal `testDebugUnitTest` runs skip this opt-in class.
+
+The runner queries Google DNS over HTTPS at `dns.google`, puts the returned API
+addresses in a temporary test-JVM hosts file, and retains the official URL and TLS
+hostname verification. It changes no system or device DNS settings. Temporary
+resolver files are removed when the command exits. Only synthetic prompts and tool
+results are sent; no device tools execute. Gradle's JUnit report records the results.

@@ -63,12 +63,32 @@ class ModelConnectionProbeTest {
 
     private fun textResponse() = stream(delta("MOBILECLAW_"), delta("PROBE_OK"), finish("stop"))
 
-    private fun toolsResponse(marker: String = "MOBILECLAW_PROBE_OK") = stream(
+    private fun toolsResponse(marker: String = "MOBILECLAW_PROBE_OK", finishReason: String = "tool_calls") = stream(
         // The first empty object is a real Gemini-compatible stream shape.
         toolFragment("mobileclaw_probe", "{}"),
         toolFragment(arguments = "{\"marker\":\""),
-        toolFragment(arguments = marker), toolFragment(arguments = "\"}"), finish("tool_calls"),
+        toolFragment(arguments = marker), toolFragment(arguments = "\"}"), finish(finishReason),
     )
+
+    @Test fun geminiStopWithACompleteToolPayloadContinuesTheRoundTrip() = runTest {
+        server.enqueue(textResponse())
+        server.enqueue(toolsResponse(finishReason = "stop"))
+        server.enqueue(textResponse())
+        server.enqueue(completion(triage().toString()))
+        assertEquals(ModelConnectionProbe.Status.SUPPORTED, ModelConnectionProbe().test(profile()).toolCalling.status)
+        assertEquals(4, server.requestCount)
+    }
+
+    @Test fun truncatedOrFilteredToolPayloadsNeverProceedToTheResultRequest() = runTest {
+        for (reason in listOf("length", "content_filter")) {
+            server.enqueue(textResponse())
+            server.enqueue(toolsResponse(finishReason = reason))
+            server.enqueue(completion(triage().toString()))
+            val before = server.requestCount
+            assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, ModelConnectionProbe().test(profile()).toolCalling.status)
+            assertEquals(before + 3, server.requestCount)
+        }
+    }
 
     private fun triage() = JSONObject().put("action", "do_nothing").put("priority", "low")
         .put("reasoning", "This synthetic test is idle.").put("reply_text", "")

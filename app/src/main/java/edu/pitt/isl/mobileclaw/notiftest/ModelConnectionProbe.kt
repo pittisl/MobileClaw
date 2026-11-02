@@ -220,7 +220,9 @@ class ModelConnectionProbe internal constructor(
     private fun validateTools(stream: SseTurn): Check {
         val calls = stream.toolCalls()
         val args = calls.singleOrNull()?.let { strictObject(it.third) }
-        return if (stream.finishReason == "tool_calls" && calls.size == 1 && calls[0].second == TOOL &&
+        // Gemini 3.5 completes tool-call streams with "stop"; the call payload
+        // identifies a tool response. Still reject truncated or filtered streams.
+        return if (stream.finishReason in setOf("tool_calls", "stop") && calls.size == 1 && calls[0].second == TOOL &&
             args != null && args.length() == 1 && args.opt("marker") == MARKER)
             Check(Status.SUPPORTED, "Reassembled the expected streamed tool call.")
         else Check(Status.UNSUPPORTED, "The streamed tool call or its arguments did not match the probe.")
