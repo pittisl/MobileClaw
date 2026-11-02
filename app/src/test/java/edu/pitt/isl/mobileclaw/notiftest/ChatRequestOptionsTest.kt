@@ -104,6 +104,41 @@ class ChatRequestOptionsTest {
         assertTrue(once.similar(body))
     }
 
+    @Test fun flashLiteToolsPreserveSchemasAndUseMediumReasoningWithoutSampling() {
+        val body = request().put("model", "gemini-3.5-flash-lite").put("top_p", 0.8).put("top_k", 20)
+        val tools = body.getJSONArray("tools").toString()
+        val messages = body.getJSONArray("messages").toString()
+        ChatRequestOptions.applyTo(GOOGLE, body)
+        assertEquals("medium", body.getString("reasoning_effort"))
+        for (key in listOf("temperature", "top_p", "top_k")) assertFalse(body.has(key))
+        assertEquals(tools, body.getJSONArray("tools").toString())
+        assertEquals(messages, body.getJSONArray("messages").toString())
+        val once = JSONObject(body.toString())
+        ChatRequestOptions.applyTo(GOOGLE, body)
+        assertTrue(once.similar(body))
+    }
+
+    @Test fun flashLiteJsonRequestsKeepDefaultThinkingAndOtherProvidersKeepSampling() {
+        val body = request().put("model", "gemini-3.5-flash-lite").apply { remove("tools") }
+        ChatRequestOptions.applyTo(GOOGLE, body)
+        assertFalse(body.has("temperature"))
+        assertFalse(body.has("reasoning_effort"))
+        val proxy = request().put("model", "gemini-3.5-flash-lite")
+        val before = JSONObject(proxy.toString())
+        ChatRequestOptions.applyTo("https://example.org/v1/chat/completions", proxy)
+        assertTrue(before.similar(proxy))
+    }
+
+    @Test fun flashLiteExplicitThinkingIsNotOverwrittenOrDuplicated() {
+        val body = request().put("model", "gemini-3.5-flash-lite").put("reasoning_effort", "high")
+        ChatRequestOptions.applyTo(GOOGLE, body)
+        assertEquals("high", body.getString("reasoning_effort"))
+        val native = request().put("model", "gemini-3.5-flash-lite").put("extra_body",
+            JSONObject("""{"google":{"thinking_config":{"thinking_level":"low"}}}"""))
+        ChatRequestOptions.applyTo(GOOGLE, native)
+        assertFalse(native.has("reasoning_effort"))
+    }
+
     private fun request(): JSONObject = JSONObject("""{
         "model":"gemini-2.5-flash","messages":[{"role":"user","content":"Find yesterday's dog photo."}],
         "temperature":0.2,"stream":true,"stream_options":{"include_usage":true},

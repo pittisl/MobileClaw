@@ -278,7 +278,7 @@ class OpenAiAiClient(
                     // The message is put in the array before it has content: admitting
                     // this result is what may shrink the earlier ones, so every content
                     // is written from one rewrite pass rather than two code paths.
-                    val toolMsg = JSONObject().put("role", "tool").put("tool_call_id", id)
+                    val toolMsg = JSONObject().put("role", "tool").put("tool_call_id", id).put("name", name)
                     messages.put(toolMsg)
                     toolMessages += toolMsg
                     toolBudget.admit(name, result).forEachIndexed { i, text ->
@@ -326,7 +326,9 @@ class OpenAiAiClient(
                     }
                     // This is an application requirement, not a new USER message or
                     // permission from notification text. Retain the original fixed seed.
-                    messages.put(turn.assistantTurnJson())
+                    // Retry from the existing user/tool input. Gemini 3.5 rejects
+                    // requests ending in an assistant prefill. The premature prose
+                    // is not a completed answer to add to conversation history.
                     messages.getJSONObject(0).put("content", "$fullSystemPrompt\n\nCompletion requirement:\n$reminder")
                     completingRequirement = true
                     ReasoningTrace.chatTurnEnd(traceTurn, "continue", turn.content.toString(), turn.promptTokens, turn.completionTokens)

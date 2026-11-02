@@ -7,7 +7,7 @@
 LLM_DEV_DEFAULTS=false
 LLM_API_KEY=
 LLM_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
-LLM_MODEL=gemini-2.5-flash
+LLM_MODEL=gemini-3.5-flash-lite
 
 # Optional internal Notion integration, subject to the same developer-build guard.
 NOTION_API_KEY=

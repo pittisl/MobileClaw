@@ -17,6 +17,8 @@ internal class SseTurn {
         var id: String = ""
         var name: String = ""
         val args = StringBuilder()
+        // Gemini requires tool_calls[].extra_content.google.thought_signature on replay.
+        val extraContent = JSONObject()
     }
 
     private val toolBuilders = TreeMap<Int, ToolAcc>()
@@ -82,11 +84,13 @@ internal class SseTurn {
         val idx = tc.optInt("index", 0)
         val id = if (tc.has("id") && !tc.isNull("id")) tc.getString("id") else null
         val current = slotFor[idx] ?: idx
-        val key = if (id != null && toolBuilders[current]?.let { it.id.isNotBlank() && it.id != id } == true) {
+        val knownKey = id?.let { value -> toolBuilders.entries.firstOrNull { it.value.id == value }?.key }
+        val key = knownKey ?: if (id != null && toolBuilders[current]?.let { it.id.isNotBlank() && it.id != id } == true) {
             (toolBuilders.lastKey() + 1).also { slotFor[idx] = it }
         } else current
         val b = toolBuilders.getOrPut(key) { ToolAcc() }
         if (id != null) b.id = id
+        tc.optJSONObject("extra_content")?.let { mergeMetadata(b.extraContent, it) }
         tc.optJSONObject("function")?.let { fn ->
             if (fn.has("name") && !fn.isNull("name")) b.name = fn.getString("name")
             if (fn.has("arguments") && !fn.isNull("arguments")) {
@@ -98,6 +102,20 @@ internal class SseTurn {
                 // placeholder is only ever the first fragment, so it is replaced, not kept.
                 if (frag.isNotEmpty() && b.args.toString() == "{}") b.args.setLength(0)
                 b.args.append(frag)
+            }
+        }
+    }
+
+    // Signatures are opaque values, not argument fragments. Merge nested metadata
+    // so a later chunk cannot erase a signature carried by an earlier chunk.
+    private fun mergeMetadata(target: JSONObject, source: JSONObject) {
+        for (key in source.keys()) {
+            val value = source.get(key)
+            if (value is JSONObject) {
+                val nested = target.optJSONObject(key) ?: JSONObject().also { target.put(key, it) }
+                mergeMetadata(nested, value)
+            } else if (value != JSONObject.NULL) {
+                target.put(key, value)
             }
         }
     }
@@ -119,6 +137,7 @@ internal class SseTurn {
                     .put("id", b.id.ifBlank { "call_$idx" })
                     .put("type", "function")
                     .put("function", JSONObject().put("name", b.name).put("arguments", b.args.toString().ifBlank { "{}" }))
+                    .apply { if (b.extraContent.length() > 0) put("extra_content", JSONObject(b.extraContent.toString())) }
             )
         }
         return JSONObject()
@@ -144,6 +163,7 @@ internal class SseTurn {
                     val tc = tcs.getJSONObject(i)
                     val b = toolBuilders.getOrPut(i) { ToolAcc() }
                     b.id = tc.optString("id")
+                    tc.optJSONObject("extra_content")?.let { mergeMetadata(b.extraContent, it) }
                     tc.optJSONObject("function")?.let { fn ->
                         b.name = fn.optString("name")
                         b.args.append(fn.optString("arguments", ""))

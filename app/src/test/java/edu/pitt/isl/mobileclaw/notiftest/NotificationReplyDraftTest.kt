@@ -487,7 +487,8 @@ class NotificationReplyDraftTest {
             val continued = requests[1].messages()
             assertTrue(continued.first().getString("content").startsWith(originalSystem + "\n\nCompletion requirement:\n"))
             assertTrue(continued.first().getString("content").contains("hold_reason"))
-            assertEquals(premature, continued.single { it.getString("role") == "assistant" }.getString("content"))
+            assertEquals("user", continued.last().getString("role"))
+            assertFalse(continued.any { it.getString("role") == "assistant" })
             assertTrue(requests[2].messages().single { it.getString("role") == "tool" }
                 .getString("content").startsWith("Draft saved"))
         } finally {
@@ -517,7 +518,8 @@ class NotificationReplyDraftTest {
                 val messages = server.requestBody().messages()
                 assertEquals(1, messages.count { it.getString("role") == "system" })
                 assertEquals(FollowUp.SEED, messages.single { it.getString("role") == "user" }.getString("content"))
-                assertEquals(index, messages.count { it.getString("role") == "assistant" })
+                assertEquals(0, messages.count { it.getString("role") == "assistant" })
+                assertEquals("user", messages.last().getString("role"))
                 assertEquals("The requirement replaces its prior copy instead of growing on each retry",
                     if (index == 0) 0 else 1,
                     Regex("Completion requirement:").findAll(messages.first().getString("content")).count())

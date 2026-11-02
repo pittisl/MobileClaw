@@ -67,19 +67,31 @@ class ModelConnectionProbe internal constructor(
         return Result(streaming, tools, structured, vision)
     }
 
-    private enum class Mode { STREAMING, TOOLS, STRUCTURED, VISION }
-    private data class Attempt(val check: Check, val rejectedUsageOption: Boolean = false)
+    private enum class Mode { STREAMING, TOOLS, TOOL_RESULT, STRUCTURED, VISION }
+    private data class Attempt(
+        val check: Check,
+        val rejectedUsageOption: Boolean = false,
+        val assistantTurn: JSONObject? = null,
+        val usageOmitted: Boolean = false,
+    )
 
     private suspend fun check(client: OkHttpClient, profile: LlmProfile, mode: Mode): Check {
-        val streamed = mode == Mode.STREAMING || mode == Mode.TOOLS
-        val first = attempt(client, profile, mode, includeUsage = streamed)
-        if (!first.rejectedUsageOption) return first.check
-        // A single explicit compatibility retry, before a successful stream starts.
-        // No retry for unrelated 400s, partial streams, auth errors, or other hosts.
-        val second = attempt(client, profile, mode, includeUsage = false).check
-        return if (second.status == Status.SUPPORTED) {
-            second.copy(detail = second.detail + " Usage reporting option omitted.")
-        } else second
+        suspend fun runAttempt(stage: Mode, assistantTurn: JSONObject? = null, allowUsage: Boolean = true): Attempt {
+            val streamed = stage == Mode.STREAMING || stage == Mode.TOOLS || stage == Mode.TOOL_RESULT
+            val first = attempt(client, profile, stage, includeUsage = streamed && allowUsage, assistantTurn = assistantTurn)
+            if (!first.rejectedUsageOption) return first
+            // Retry only the rejected request, including a rejected tool-result request.
+            // The accepted function-call response and its signature stay unchanged.
+            val second = attempt(client, profile, stage, includeUsage = false, assistantTurn = assistantTurn)
+            return if (second.check.status == Status.SUPPORTED) {
+                second.copy(check = second.check.copy(detail = second.check.detail + " Usage reporting option omitted."), usageOmitted = true)
+            } else second
+        }
+        val first = runAttempt(mode)
+        if (mode != Mode.TOOLS || first.check.status != Status.SUPPORTED) return first.check
+        val final = runAttempt(Mode.TOOL_RESULT, requireNotNull(first.assistantTurn), allowUsage = !first.usageOmitted).check
+        return if (first.usageOmitted && final.status == Status.SUPPORTED)
+            final.copy(detail = final.detail + " Usage reporting option omitted.") else final
     }
 
     private suspend fun attempt(
@@ -87,16 +99,17 @@ class ModelConnectionProbe internal constructor(
         profile: LlmProfile,
         mode: Mode,
         includeUsage: Boolean,
+        assistantTurn: JSONObject? = null,
     ): Attempt = suspendCancellableCoroutine { continuation ->
         val request = try {
             Request.Builder()
                 .url(profile.endpoint)
-                .header("Accept", if (mode == Mode.STREAMING || mode == Mode.TOOLS)
+                .header("Accept", if (mode == Mode.STREAMING || mode == Mode.TOOLS || mode == Mode.TOOL_RESULT)
                     "text/event-stream" else "application/json")
                 .apply {
                     if (profile.auth == LlmAuth.BEARER) header("Authorization", "Bearer ${profile.apiKey}")
                 }
-                .post(requestBody(profile.model, mode, includeUsage).toString().toRequestBody(JSON_MEDIA))
+                .post(ChatRequestOptions.applyTo(profile.endpoint, requestBody(profile.model, mode, includeUsage, assistantTurn)).toString().toRequestBody(JSON_MEDIA))
                 .build()
         } catch (_: IllegalArgumentException) {
             // OkHttp's header validation errors can contain the submitted header value.
@@ -116,6 +129,10 @@ class ModelConnectionProbe internal constructor(
                         if (!it.isSuccessful) {
                             val hint = includeUsage && it.code == 400 && rejectsUsageOption(readBody(it))
                             Attempt(httpFailure(it.code), rejectedUsageOption = hint)
+                        } else if (mode == Mode.TOOLS) {
+                            val turn = readStream(it)
+                            val check = validateTools(turn)
+                            Attempt(check, assistantTurn = if (check.status == Status.SUPPORTED) turn.assistantTurnJson() else null)
                         } else Attempt(validate(it, mode))
                     }
                 } catch (e: IOException) {
@@ -128,12 +145,13 @@ class ModelConnectionProbe internal constructor(
         })
     }
 
-    private fun requestBody(model: String, mode: Mode, includeUsage: Boolean): JSONObject {
+    private fun requestBody(model: String, mode: Mode, includeUsage: Boolean, assistantTurn: JSONObject?): JSONObject {
         val messages = JSONArray().put(JSONObject().put("role", "system").put("content",
             "This is a synthetic MobileClaw connection test. Follow the requested output format exactly."))
         val content: Any = when (mode) {
             Mode.STREAMING -> "Reply with exactly $MARKER and no other text."
-            Mode.TOOLS -> "Call $TOOL once with marker set to $MARKER. Do not answer in prose."
+            Mode.TOOLS, Mode.TOOL_RESULT -> "Call $TOOL once with marker set to $MARKER. " +
+                "After receiving its result, reply with exactly $MARKER and no other text."
             Mode.STRUCTURED -> "Classify this synthetic system status: a test is idle and requires no action. " +
                 "Return only a JSON object with action=do_nothing, priority=low, a nonempty reasoning string, " +
                 "reply_text and action_title as empty strings, confidence as a number from 0 to 1, " +
@@ -145,13 +163,23 @@ class ModelConnectionProbe internal constructor(
                     JSONObject().put("url", "data:image/png;base64,$SYNTHETIC_IMAGE")))
         }
         messages.put(JSONObject().put("role", "user").put("content", content))
+        if (mode == Mode.TOOL_RESULT) {
+            val previous = requireNotNull(assistantTurn)
+            val call = previous.getJSONArray("tool_calls").getJSONObject(0)
+            messages.put(previous)
+            messages.put(JSONObject().put("role", "tool")
+                .put("tool_call_id", call.getString("id"))
+                .put("name", call.getJSONObject("function").getString("name"))
+                .put("content", JSONObject().put("marker", MARKER).toString()))
+        }
         return JSONObject().put("model", model).put("messages", messages)
-            .put("max_tokens", 192)
-            .put("stream", mode == Mode.STREAMING || mode == Mode.TOOLS)
+            .put("max_tokens", if (model == "gemini-3.5-flash-lite") 4096 else 192)
+            .put("stream", mode == Mode.STREAMING || mode == Mode.TOOLS || mode == Mode.TOOL_RESULT)
             .apply {
                 if (includeUsage) put("stream_options", JSONObject().put("include_usage", true))
                 if (mode == Mode.STRUCTURED) put("response_format", JSONObject().put("type", "json_object"))
-                if (mode == Mode.TOOLS) put("tools", JSONArray().put(JSONObject()
+                if (mode == Mode.TOOL_RESULT) put("tool_choice", "none")
+                if (mode == Mode.TOOLS || mode == Mode.TOOL_RESULT) put("tools", JSONArray().put(JSONObject()
                     .put("type", "function").put("function", JSONObject()
                         .put("name", TOOL)
                         .put("description", "Synthetic diagnostic only; this function is never executed.")
@@ -170,14 +198,12 @@ class ModelConnectionProbe internal constructor(
                 Check(Status.SUPPORTED, "Received the expected text through a completed SSE stream.")
             else Check(Status.UNSUPPORTED, "The SSE text probe did not complete with the expected response.")
         }
-        Mode.TOOLS -> {
+        Mode.TOOLS -> error("Tool-call responses are parsed with their replay metadata.")
+        Mode.TOOL_RESULT -> {
             val stream = readStream(response)
-            val calls = stream.toolCalls()
-            val args = calls.singleOrNull()?.let { strictObject(it.third) }
-            if (stream.finishReason == "tool_calls" && calls.size == 1 && calls[0].second == TOOL &&
-                args != null && args.length() == 1 && args.opt("marker") == MARKER)
-                Check(Status.SUPPORTED, "Reassembled the expected streamed tool call; no tool was executed.")
-            else Check(Status.UNSUPPORTED, "The streamed tool call or its arguments did not match the probe.")
+            if (stream.content.toString().trim() == MARKER && stream.finishReason == "stop" && !stream.hasToolCalls())
+                Check(Status.SUPPORTED, "Completed the streamed tool-call round trip with a synthetic result; no tool was executed.")
+            else Check(Status.UNSUPPORTED, "The model did not complete the synthetic tool-result round trip.")
         }
         Mode.STRUCTURED -> {
             val obj = strictObject(completionText(response))
@@ -189,6 +215,15 @@ class ModelConnectionProbe internal constructor(
                 Check(Status.SUPPORTED, "Recognized the synthetic image's dominant color.")
             else Check(Status.UNSUPPORTED, "The synthetic image response did not match the expected color.")
         }
+    }
+
+    private fun validateTools(stream: SseTurn): Check {
+        val calls = stream.toolCalls()
+        val args = calls.singleOrNull()?.let { strictObject(it.third) }
+        return if (stream.finishReason == "tool_calls" && calls.size == 1 && calls[0].second == TOOL &&
+            args != null && args.length() == 1 && args.opt("marker") == MARKER)
+            Check(Status.SUPPORTED, "Reassembled the expected streamed tool call.")
+        else Check(Status.UNSUPPORTED, "The streamed tool call or its arguments did not match the probe.")
     }
 
     private fun validTriage(obj: JSONObject): Boolean {

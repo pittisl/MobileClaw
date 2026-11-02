@@ -5,23 +5,27 @@ import java.net.URI
 
 /** Provider-specific request options, without changing prompts or callable schemas. */
 object ChatRequestOptions {
-    /** Adds at most one option to the newly built request; its model is the source of truth. */
+    /** Apply model-specific options to every request path, including JSON-only calls. */
     fun applyTo(endpoint: String, body: JSONObject): JSONObject {
-        if (body.optString("model") != "gemini-2.5-flash" ||
-            (body.optJSONArray("tools")?.length() ?: 0) == 0 || body.has("reasoning_effort")) return body
         val uri = try { URI(endpoint) } catch (_: Exception) { return body }
         if (!uri.scheme.equals("https", ignoreCase = true) ||
             !uri.host.equals("generativelanguage.googleapis.com", ignoreCase = true)) return body
-
-        // On the complete 24-tool catalog, repeated device probes returned empty
-        // STOP turns with the provider's default thinking budget. A fixed nonzero
-        // budget helped the original prompt but failed again after a prompt change;
-        // disabling internal thinking restored calls without changing tools or prose.
-        // This is an observed compatibility setting, not a claim about Google's
-        // internal cause. The documented Gemini 2.5 option disables the internal
-        // thinking budget: https://ai.google.dev/gemini-api/docs/openai#thinking
-        // Leave an explicitly supplied reasoning_effort alone if one is added later.
-        body.put("reasoning_effort", "none")
+        val hasTools = (body.optJSONArray("tools")?.length() ?: 0) > 0
+        when (body.optString("model")) {
+            "gemini-3.5-flash-lite" -> {
+                // 3.5 ignores custom sampling; use the provider's supported defaults.
+                listOf("temperature", "top_p", "top_k").forEach { body.remove(it) }
+                val thinking = body.optJSONObject("extra_body")?.optJSONObject("google")
+                    ?.optJSONObject("thinking_config")
+                if (!body.has("reasoning_effort") && thinking == null && hasTools) {
+                    body.put("reasoning_effort", "medium")
+                }
+            }
+            "gemini-2.5-flash" -> {
+                // Compatibility for explicitly selected legacy models before retirement.
+                if (hasTools && !body.has("reasoning_effort")) body.put("reasoning_effort", "none")
+            }
+        }
         return body
     }
 }

@@ -49,7 +49,7 @@ data class LlmProfile(
     companion object {
         fun preset(provider: LlmProvider): LlmProfile = when (provider) {
             LlmProvider.GEMINI -> LlmProfile(provider,
-                "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-2.5-flash")
+                "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-3.5-flash-lite")
             LlmProvider.OPENAI -> LlmProfile(provider, "https://api.openai.com/v1/", "gpt-4o")
             LlmProvider.LOCAL -> LlmProfile(provider, "http://127.0.0.1:8080/v1/", "",
                 auth = LlmAuth.NONE, readTimeoutSeconds = 300, inputBudgetTokens = 8_000,

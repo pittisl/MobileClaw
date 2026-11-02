@@ -136,6 +136,7 @@ class DailyPassRunner(
                 })
                 .put("temperature", 0.1)
                 .put("response_format", JSONObject().put("type", "json_object"))
+                .let { ChatRequestOptions.applyTo(endpoint, it) }
                 .toString()
 
             if (HistoryBudget.estimateTokens(body) > inputBudgetTokens) {

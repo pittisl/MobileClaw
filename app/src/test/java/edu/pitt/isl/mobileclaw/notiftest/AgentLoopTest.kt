@@ -200,7 +200,47 @@ class AgentLoopTest {
         }
     }
 
+    @Test
+    fun `completion reminder retries from user input without assistant prefill`() = runTest {
+        var stops = 0
+        val required = spec().copy(completionReminder = {
+            if (stops++ == 0) "Complete the required preparation." else null
+        })
+        server.enqueueSse(delta("premature"), finish("stop"))
+        server.enqueueSse(delta("prepared"), finish("stop"))
+        val events = client().run(required, history).toList()
+        val original = messagesOf(server.takeRequest())
+        val retry = messagesOf(server.takeRequest())
+        assertEquals(original.size, retry.size)
+        assertEquals("user", retry.last().getString("role"))
+        assertTrue(retry.first().getString("content").contains("Complete the required preparation."))
+        assertEquals(original.filter { it.getString("role") == "user" }.map { it.toString() },
+            retry.filter { it.getString("role") == "user" }.map { it.toString() })
+        assertEquals("prepared", events.filterIsInstance<AgentEvent.Done>().single().message.content)
+    }
+
     // ---- the tool round-trip ------------------------------------------------
+
+    @Test
+    fun `thought signature survives the real tool loop into the next HTTP request`() = runTest {
+        val tool = RecordingTool()
+        server.enqueueSse(
+            toolFrag(id = "call_signed", name = tool.name, args = "{}"),
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"extra_content":{"google":{"thought_signature":"opaque+/="}}}]}}]}""",
+            finish("tool_calls")
+        )
+        server.enqueueSse(delta("done"), finish("stop"))
+        val events = client().run(spec(tool), history).toList()
+        assertEquals(1, tool.calls.size)
+        assertEquals(1, events.filterIsInstance<AgentEvent.Done>().size)
+        server.takeRequest()
+        val messages = messagesOf(server.takeRequest())
+        val call = messages.single { it.optString("role") == "assistant" }
+            .getJSONArray("tool_calls").getJSONObject(0)
+        assertEquals("opaque+/=", call.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"))
+        assertEquals("call_signed", messages.single { it.optString("role") == "tool" }.getString("tool_call_id"))
+    }
+
 
     /**
      * Gemini's OpenAI-compatible endpoint sometimes opens a call with an `arguments` fragment

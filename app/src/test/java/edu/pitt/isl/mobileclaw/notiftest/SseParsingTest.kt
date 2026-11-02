@@ -15,6 +15,51 @@ class SseParsingTest {
     private fun SseTurn.feed(vararg payloads: String) = payloads.forEach { onPayload(it) }
 
     @Test
+    fun `late signatures remain attached to their parallel calls`() {
+        val turn = SseTurn()
+        turn.feed(
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"a","function":{"name":"first","arguments":"{}"}}]}}]}""",
+            """{"choices":[{"delta":{"tool_calls":[{"index":1,"id":"b","function":{"name":"second","arguments":"{}"},"extra_content":{"google":{"thought_signature":"signature-b"}}}]}}]}""",
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"extra_content":{"google":{"thought_signature":"signature-a"}}}]}}]}""",
+            """{"choices":[{"delta":{"tool_calls":[{"index":1,"extra_content":{"google":{"other_metadata":true}}}]}}]}"""
+        )
+        val calls = turn.assistantTurnJson().getJSONArray("tool_calls")
+        assertEquals(2, calls.length())
+        for (i in 0..1) {
+            val call = calls.getJSONObject(i)
+            assertEquals("signature-${call.getString("id")}",
+                call.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"))
+        }
+        assertTrue(calls.getJSONObject(1).getJSONObject("extra_content").getJSONObject("google").getBoolean("other_metadata"))
+    }
+
+    @Test
+    fun `signature arriving with earlier id at reused index updates the original call`() {
+        val turn = SseTurn()
+        turn.feed(
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"a","function":{"name":"first","arguments":"{}"}}]}}]}""",
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"b","function":{"name":"second","arguments":"{}"}}]}}]}""",
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"a","extra_content":{"google":{"thought_signature":"signature-a"}}}]}}]}"""
+        )
+        val calls = turn.assistantTurnJson().getJSONArray("tool_calls")
+        assertEquals(2, calls.length())
+        assertEquals("signature-a", calls.getJSONObject(0).getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"))
+        assertFalse(calls.getJSONObject(1).has("extra_content"))
+    }
+
+    @Test
+    fun `whole response retains opaque signature without adding it to unsigned calls`() {
+        val turn = SseTurn()
+        turn.fallbackFromWholeBody("""{"choices":[{"message":{"role":"assistant","content":"","tool_calls":[
+            {"id":"a","type":"function","function":{"name":"first","arguments":"{}"},"extra_content":{"google":{"thought_signature":"opaque+/="}}},
+            {"id":"b","type":"function","function":{"name":"second","arguments":"{}"}}
+        ]},"finish_reason":"tool_calls"}]}""")
+        val calls = turn.assistantTurnJson().getJSONArray("tool_calls")
+        assertEquals("opaque+/=", calls.getJSONObject(0).getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"))
+        assertFalse(calls.getJSONObject(1).has("extra_content"))
+    }
+
+    @Test
     fun `content fragments reassemble in order`() {
         val turn = SseTurn()
         turn.feed(

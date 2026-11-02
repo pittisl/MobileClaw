@@ -66,7 +66,7 @@ class LlmProfileTest {
         assertEquals(300L, local.readTimeoutSeconds)
         assertEquals(8_000, local.inputBudgetTokens)
         assertFalse(local.supportsImages)
-        assertEquals("gemini-2.5-flash", LlmProfile.preset(LlmProvider.GEMINI).model)
+        assertEquals("gemini-3.5-flash-lite", LlmProfile.preset(LlmProvider.GEMINI).model)
         assertEquals("gpt-4o", LlmProfile.preset(LlmProvider.OPENAI).model)
     }
 

@@ -1,5 +1,7 @@
 package edu.pitt.isl.mobileclaw.notiftest
 
+import java.net.URI
+
 internal interface LlmConfigStorage {
     fun loadOrInitialize(developerSeed: () -> LlmProfile?): LlmStoredState
     fun write(state: LlmStoredState)
@@ -20,7 +22,19 @@ internal class LlmConfigRepository(
 
     init {
         try {
-            state = storage.loadOrInitialize(developerSeed)
+            val loaded = storage.loadOrInitialize(developerSeed)
+            val migrated = loaded.copy(profiles = loaded.profiles.mapValues { (_, profile) ->
+                val uri = runCatching { URI(profile.baseUrl) }.getOrNull()
+                if (profile.model == "gemini-2.5-flash" &&
+                    uri?.scheme.equals("https", ignoreCase = true) &&
+                    uri?.host.equals("generativelanguage.googleapis.com", ignoreCase = true)) {
+                    profile.copy(model = "gemini-3.5-flash-lite")
+                } else profile
+            })
+            // Upgrade inactive profiles and development seeds too. Publish only after
+            // the encrypted store has accepted the migration; restart then is a no-op.
+            if (migrated != loaded) storage.write(migrated)
+            state = migrated
             revision++
         } catch (_: Exception) {
             failClosed()

@@ -12,7 +12,7 @@ The Base URL is the API prefix, such as `https://api.openai.com/v1/` or
 re-enter a credential intended for that address. Requests do not follow redirects.
 
 **Test connection** sends only built-in synthetic prompts. It separately checks
-streaming text, streamed tool-call arguments, structured JSON for notification
+streaming text, a complete tool-call round trip with a synthetic result, structured JSON for notification
 triage, and (when enabled) a small synthetic image. No actual device tools run and
 no notification, memory, chat history or photo is included. A passing probe verifies
 these small examples, not the model's reliability on arbitrary agent tasks.
@@ -66,7 +66,7 @@ installation only, preserve the existing SDK settings in gitignored
 LLM_DEV_DEFAULTS=true
 LLM_API_KEY=your-own-development-key
 LLM_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
-LLM_MODEL=gemini-2.5-flash
+LLM_MODEL=gemini-3.5-flash-lite
 ```
 
 The seed is imported only on the installation's first initialization. Existing
@@ -88,3 +88,39 @@ The distributed APK cannot use Notion because it contains no Notion token.
 To try the implemented integration, follow the
 [Notion build configuration](building.md#enable-notion-in-your-own-build)
 to compile a debug APK with your own token and grant access to your pages.
+
+## Gemini 3.5 Flash-Lite migration (2026-11-02)
+
+The Gemini preset uses `gemini-3.5-flash-lite`. At startup, saved profiles using
+`gemini-2.5-flash` on Google's official HTTPS host are upgraded and saved, including
+inactive profiles and development seeds. Credentials, provider selection, and
+other profile settings are preserved. Custom endpoints keep their chosen model.
+
+The OpenAI-compatible transport preserves each tool call's
+`extra_content.google.thought_signature` across streaming chunks and whole-body
+responses, and returns it with the assistant tool-call message. Tool results carry
+both the matching call ID and function name. Calls within an agent turn retain
+these messages; subsequent user turns use the existing settled conversation history.
+When a required preparation step is missing, continuation retries from the last
+user/tool input with a system reminder, avoiding unsupported assistant prefills.
+
+Tool requests use `reasoning_effort: medium`. JSON-only notification triage and
+memory consolidation use the model's default thinking level. All official
+3.5 Flash-Lite request paths omit `temperature`, `top_p`, and `top_k`.
+
+Google's November 2 retirement email announces that old-model requests redirect to
+3.5 Flash-Lite on December 1, 2026. The protocol changes follow Google's
+[Flash-Lite migration guide](https://aistudio.google.com/docs/whats-new-gemini-3.6),
+[OpenAI compatibility guide](https://aistudio.google.com/docs/openai), and
+[thought signature specification](https://ai.google.dev/gemini-api/docs/generate-content/thought-signatures).
+Historical experiment reports and archived demo APKs retain their original model.
+
+Validation on 2026-11-02: `:app:compileDebugKotlin` and
+`:app:testDebugUnitTest` succeeded in both source repositories. The development
+checkout passed 464 tests; the public checkout passed 461 with one CLIP tokenizer
+test skipped because its local model assets are absent. Regression cases cover
+signature replay, parallel and non-streamed calls, saved-profile upgrades,
+complete connection probes, and preparation retries without assistant prefills.
+A live synthetic Gemini probe could not reach the API because this workstation's
+DNS could not resolve `generativelanguage.googleapis.com`. Run **Test connection**
+on a network-enabled installation to complete live service validation.

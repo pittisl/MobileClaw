@@ -81,6 +81,7 @@ class ModelConnectionProbeTest {
     private fun enqueueSuccess() {
         server.enqueue(textResponse())
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().toString()))
     }
 
@@ -93,8 +94,8 @@ class ModelConnectionProbeTest {
         val result = ModelConnectionProbe().test(profile())
         assertEquals(List(3) { ModelConnectionProbe.Status.SUPPORTED }, checks(result).take(3).map { it.status })
         assertEquals(ModelConnectionProbe.Status.NOT_CHECKED, result.vision.status)
-        assertEquals(3, server.requestCount)
-        val requests = List(3) { server.takeRequest() }
+        assertEquals(4, server.requestCount)
+        val requests = List(4) { server.takeRequest() }
         requests.forEach {
             assertEquals("/v1/chat/completions", it.path)
             assertNull(it.getHeader("Authorization"))
@@ -104,21 +105,21 @@ class ModelConnectionProbeTest {
         val functions = bodies[1].getJSONArray("tools")
         assertEquals(1, functions.length())
         assertEquals("mobileclaw_probe", functions.getJSONObject(0).getJSONObject("function").getString("name"))
-        assertEquals("json_object", bodies[2].getJSONObject("response_format").getString("type"))
-        assertFalse(bodies[2].getBoolean("stream"))
+        assertEquals("json_object", bodies[3].getJSONObject("response_format").getString("type"))
+        assertFalse(bodies[3].getBoolean("stream"))
     }
 
     @Test fun explicitBearerIsSentOnlyToTheEnteredEndpoint() = runTest {
         enqueueSuccess()
         val result = ModelConnectionProbe().test(profile().copy(auth = LlmAuth.BEARER, apiKey = "synthetic-secret"))
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.streaming.status)
-        repeat(3) { assertEquals("Bearer synthetic-secret", server.takeRequest().getHeader("Authorization")) }
+        repeat(4) { assertEquals("Bearer synthetic-secret", server.takeRequest().getHeader("Authorization")) }
     }
 
     @Test fun noAuthDropsEvenAStaleKey() = runTest {
         enqueueSuccess()
         ModelConnectionProbe().test(profile().copy(apiKey = "must-not-send"))
-        repeat(3) { assertNull(server.takeRequest().getHeader("Authorization")) }
+        repeat(4) { assertNull(server.takeRequest().getHeader("Authorization")) }
     }
 
     @Test fun providerErrorsCannotEchoCredentialsOrPayloadIntoDetails() = runTest {
@@ -147,6 +148,7 @@ class ModelConnectionProbeTest {
     @Test fun aJson200DoesNotPretendToBeAnSseStream() = runTest {
         server.enqueue(completion("MOBILECLAW_PROBE_OK"))
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().toString()))
         val result = ModelConnectionProbe().test(profile())
         assertFalse(result.streaming.status == ModelConnectionProbe.Status.SUPPORTED)
@@ -156,15 +158,17 @@ class ModelConnectionProbeTest {
     @Test fun unfinishedSseIsNotReportedSupportedOrRetried() = runTest {
         server.enqueue(stream(delta("MOBILECLAW_PROBE_OK")))
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().toString()))
         val result = ModelConnectionProbe().test(profile())
         assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, result.streaming.status)
-        assertEquals(3, server.requestCount)
+        assertEquals(4, server.requestCount)
     }
 
     @Test fun triageRequiresItsActualFieldsAndTypes() = runTest {
         server.enqueue(textResponse())
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().put("confidence", "1.0").toString()))
         val result = ModelConnectionProbe().test(profile())
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.streaming.status)
@@ -175,6 +179,7 @@ class ModelConnectionProbeTest {
     @Test fun validJsonPrefixWithTrailingGarbageIsRejected() = runTest {
         server.enqueue(textResponse())
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().toString() + " trailing payload"))
         assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, ModelConnectionProbe().test(profile()).structuredOutput.status)
     }
@@ -184,7 +189,7 @@ class ModelConnectionProbeTest {
         server.enqueue(completion("red"))
         val result = ModelConnectionProbe().test(profile().copy(supportsImages = true))
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.vision.status)
-        repeat(3) { server.takeRequest() }
+        repeat(4) { server.takeRequest() }
         val body = JSONObject(server.takeRequest().body.readUtf8())
         val content = body.getJSONArray("messages").getJSONObject(1).getJSONArray("content")
         val image = content.getJSONObject(1).getJSONObject("image_url").getString("url")
@@ -213,7 +218,7 @@ class ModelConnectionProbeTest {
         val result = ModelConnectionProbe().test(profile())
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.streaming.status)
         assertTrue(result.streaming.detail.contains("omitted"))
-        assertEquals(4, server.requestCount)
+        assertEquals(5, server.requestCount)
         val first = server.takeRequest()
         val retry = server.takeRequest()
         assertEquals(first.path, retry.path)
@@ -225,11 +230,12 @@ class ModelConnectionProbeTest {
         server.enqueue(MockResponse().setResponseCode(400).setBody(JSONObject().put("error", JSONObject()
             .put("message", "Unknown model. stream_options was accepted.")).toString()))
         server.enqueue(toolsResponse())
+        server.enqueue(textResponse())
         server.enqueue(completion(triage().toString()))
         val result = ModelConnectionProbe().test(profile())
         assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, result.streaming.status)
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.toolCalling.status)
-        assertEquals(3, server.requestCount)
+        assertEquals(4, server.requestCount)
     }
 
     @Test fun explicitMessageOnlyStreamOptionsRejectionIsRecognized() = runTest {
@@ -237,7 +243,7 @@ class ModelConnectionProbeTest {
             .put("message", "Unrecognized request argument supplied: stream_options")).toString()))
         enqueueSuccess()
         assertEquals(ModelConnectionProbe.Status.SUPPORTED, ModelConnectionProbe().test(profile()).streaming.status)
-        assertEquals(4, server.requestCount)
+        assertEquals(5, server.requestCount)
     }
 
     @Test fun redirectsNeverForwardBearerOrFollowASecondEndpoint() = runTest {
@@ -276,6 +282,87 @@ class ModelConnectionProbeTest {
             }
             assertTrue(activeCall.get().isCanceled())
             assertEquals(1, server.requestCount)
+        } finally {
+            job.cancelAndJoin()
+            client.connectionPool.evictAll()
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test fun toolRoundTripPreservesSignatureAndMatchingNameAndId() = runTest {
+        server.enqueue(textResponse())
+        server.enqueue(stream(toolFragment("mobileclaw_probe", "{\"marker\":\"MOBILECLAW_PROBE_OK\"}"),
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"extra_content":{"google":{"thought_signature":"opaque+/="}}}]}}]}""",
+            finish("tool_calls")))
+        server.enqueue(textResponse())
+        server.enqueue(completion(triage().toString()))
+        assertEquals(ModelConnectionProbe.Status.SUPPORTED, ModelConnectionProbe().test(profile()).toolCalling.status)
+        repeat(2) { server.takeRequest() }
+        val body = JSONObject(server.takeRequest().body.readUtf8())
+        val messages = body.getJSONArray("messages")
+        val call = messages.getJSONObject(2).getJSONArray("tool_calls").getJSONObject(0)
+        assertEquals("opaque+/=", call.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"))
+        assertEquals(call.getString("id"), messages.getJSONObject(3).getString("tool_call_id"))
+        assertEquals("mobileclaw_probe", messages.getJSONObject(3).getString("name"))
+        assertEquals("none", body.getString("tool_choice"))
+    }
+
+    @Test fun rejectedToolResultMeansToolCallingIsUnsupported() = runTest {
+        server.enqueue(textResponse())
+        server.enqueue(toolsResponse())
+        server.enqueue(MockResponse().setResponseCode(400).setBody("invalid thought signature"))
+        server.enqueue(completion(triage().toString()))
+        val result = ModelConnectionProbe().test(profile())
+        assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, result.toolCalling.status)
+        assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.structuredOutput.status)
+        assertEquals(4, server.requestCount)
+    }
+
+    @Test fun toolResultRequiresTheFinalMarkerAndCompletedStream() = runTest {
+        server.enqueue(textResponse())
+        server.enqueue(toolsResponse())
+        server.enqueue(stream(delta("wrong"), finish("stop")))
+        server.enqueue(completion(triage().toString()))
+        assertEquals(ModelConnectionProbe.Status.UNSUPPORTED, ModelConnectionProbe().test(profile()).toolCalling.status)
+    }
+
+    @Test fun usageFallbackOnToolResultReplaysTheSameHistory() = runTest {
+        server.enqueue(textResponse())
+        server.enqueue(toolsResponse())
+        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":{"param":"stream_options","code":"unsupported_parameter"}}"""))
+        server.enqueue(textResponse())
+        server.enqueue(completion(triage().toString()))
+        val result = ModelConnectionProbe().test(profile())
+        assertEquals(ModelConnectionProbe.Status.SUPPORTED, result.toolCalling.status)
+        assertTrue(result.toolCalling.detail.contains("omitted"))
+        repeat(2) { server.takeRequest() }
+        val rejected = JSONObject(server.takeRequest().body.readUtf8())
+        val retry = JSONObject(server.takeRequest().body.readUtf8())
+        assertEquals(rejected.getJSONArray("messages").toString(), retry.getJSONArray("messages").toString())
+        assertTrue(rejected.has("stream_options"))
+        assertFalse(retry.has("stream_options"))
+        assertEquals(5, server.requestCount)
+    }
+
+    @Test fun cancellationDuringToolResultStopsBeforeStructuredProbe() = runBlocking {
+        server.enqueue(textResponse())
+        server.enqueue(toolsResponse())
+        val body = "data: " + delta("MOBILECLAW_") + "\n\n"
+        server.enqueue(MockResponse().setHeader("Content-Type", "text/event-stream")
+            .setBody(body).setHeader("Content-Length", body.length + 10_000))
+        val reading = CompletableDeferred<Unit>()
+        val activeCall = AtomicReference<Call>()
+        var responses = 0
+        val client = OkHttpClient.Builder().eventListener(object : EventListener() {
+            override fun callStart(call: Call) { activeCall.set(call) }
+            override fun responseBodyStart(call: Call) { if (++responses == 3) reading.complete(Unit) }
+        }).build()
+        val job = launch(start = CoroutineStart.UNDISPATCHED) { ModelConnectionProbe(client).test(profile()) }
+        try {
+            withTimeout(5_000) { reading.await() }
+            withTimeout(2_000) { job.cancelAndJoin() }
+            assertTrue(activeCall.get().isCanceled())
+            assertEquals(3, server.requestCount)
         } finally {
             job.cancelAndJoin()
             client.connectionPool.evictAll()
